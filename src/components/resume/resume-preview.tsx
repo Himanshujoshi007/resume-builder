@@ -19,7 +19,15 @@ function safeStringArray(arr: unknown): string[] {
     .map(item => {
       if (typeof item === 'string') return item;
       if (typeof item === 'object' && item !== null) {
-        // If AI returned an object instead of a string, try to stringify it
+        // If AI returned an object instead of a string, try to extract the name
+        const obj = item as Record<string, unknown>;
+        if (typeof obj.name === 'string' && obj.name.trim()) return obj.name;
+        if (typeof obj.certification === 'string' && obj.certification.trim()) return obj.certification;
+        if (typeof obj.title === 'string' && obj.title.trim()) return obj.title;
+        if (typeof obj.value === 'string' && obj.value.trim()) return obj.value;
+        // Fallback: concatenate all string values
+        const strVals = Object.values(obj).filter((v): v is string => typeof v === 'string' && v.trim());
+        if (strVals.length > 0) return strVals.join(' - ');
         return JSON.stringify(item);
       }
       return String(item);

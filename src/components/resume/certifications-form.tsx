@@ -8,7 +8,12 @@ import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function CertificationsForm() {
   const { resumeData, setCertifications } = useResumeStore();
-  const { certifications } = resumeData;
+  // Ensure certifications are always strings (safety against AI returning objects)
+  const certifications = resumeData.certifications.map(c =>
+    typeof c === 'string' ? c : typeof c === 'object' && c !== null
+      ? (c as Record<string, unknown>).name?.toString() || (c as Record<string, unknown>).certification?.toString() || JSON.stringify(c)
+      : String(c)
+  );
 
   const addCertification = () => {
     setCertifications([...certifications, '']);

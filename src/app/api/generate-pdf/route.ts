@@ -76,7 +76,8 @@ function buildResumeHTML(data: ResumeData): string {
   }
 
   // Certifications
-  const filteredCerts = certifications.filter(c => c.trim());
+  const safeCerts = certifications.map(c => typeof c === 'string' ? c : String(c));
+  const filteredCerts = safeCerts.filter(c => c.trim());
   if (filteredCerts.length > 0) {
     html += `<div class="section-header">Certifications</div>`;
     filteredCerts.forEach(cert => {

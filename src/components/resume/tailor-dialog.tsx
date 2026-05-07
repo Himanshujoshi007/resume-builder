@@ -183,14 +183,17 @@ export function TailorDialog({ open: controlledOpen, onOpenChange: controlledOnO
 • Highlight Python and SQL skills more
 • Remove the Projects section
 • Emphasize healthcare domain experience
-• Keep the summary under 3 sentences`}
+• Keep the summary under 3 sentences
+• Change job title to Data Engineer
+• Add more technical details to experience
+• Make all bullet points action-oriented`}
                 rows={6}
                 className="resize-y text-sm"
               />
               <div className="flex items-start gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg p-3">
                 <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                 <span>
-                  These instructions help the AI understand your specific preferences. You can ask it to focus on certain sections, change writing style, adjust detail level, or anything else you want.
+                  These instructions apply to the ENTIRE resume. You can ask the AI to focus on certain sections, change writing style across all bullet points, adjust detail level, modify specific entries, or anything else you want. The AI will apply your instructions across all relevant sections — not just the summary.
                 </span>
               </div>
             </div>

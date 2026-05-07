@@ -138,6 +138,7 @@ Rules:
 - Keep all information exactly as written in the resume - do not modify or fabricate
 - For skills, group them into logical categories based on how they appear in the resume
 - If skills are listed as a simple list without categories, create appropriate categories
+- IMPORTANT: certifications MUST be an array of plain strings, NOT objects. Example: ["AWS Certified Cloud Practitioner", "PL-300"]
 - IMPORTANT: Return ONLY the JSON object, no markdown code fences, no explanation`;
 
     const completion = await zai.chat.completions.create({

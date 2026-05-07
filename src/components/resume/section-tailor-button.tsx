@@ -153,10 +153,12 @@ export function SectionTailorButton({ section, sectionLabel }: SectionTailorButt
                     value={additionalInstructions}
                     onChange={(e) => setAdditionalInstructions(e.target.value)}
                     placeholder={`Specific guidance for ${sectionLabel}, e.g.:
-• Make it more concise
-• Highlight specific keywords
-• Focus on recent experience
-• Add more technical details`}
+• Make it more concise and impactful
+• Highlight specific keywords from the JD
+• Focus on the most recent experience
+• Add more technical details and metrics
+• Use stronger action verbs
+• Reorder to put most relevant items first`}
                     rows={5}
                     className="resize-y text-sm"
                   />

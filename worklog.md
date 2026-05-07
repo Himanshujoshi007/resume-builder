@@ -68,3 +68,30 @@ Stage Summary:
 - TailorDialog has 2-step flow with job description + additional instructions
 - Match score displayed after tailoring with animated breakdown
 - Works for uploaded resumes, new blank resumes, and existing data
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix runtime errors and ensure AI tailor edits entire resume
+
+Work Log:
+- Confirmed hydration mismatch error was already fixed (suppressHydrationWarning on html and body tags)
+- Fixed c.trim() error by improving object-to-string handling across all files
+- Updated resume-store.ts normalizeResumeData to extract name/certification/title from objects instead of JSON.stringify
+- Updated resume-preview.tsx safeStringArray to extract object properties intelligently
+- Updated certifications-form.tsx to defensively handle non-string certifications
+- Updated generate-pdf/route.ts to safely convert certification items before .trim()
+- Rewrote AI tailor prompt to explicitly tailor ALL 7 sections (personalInfo, summary, certifications, skills, experience, education, projects)
+- Added explicit rule: "Certifications MUST be an array of plain strings, NOT objects"
+- Enhanced additional instructions context to apply ACROSS THE ENTIRE RESUME with concrete examples
+- Made additional instructions section-specific vs whole-resume aware (different prompts for section vs full tailor)
+- Updated tailor-dialog.tsx placeholder and info text to clarify whole-resume editing
+- Updated section-tailor-button.tsx placeholder for better guidance
+- Added "certifications MUST be plain strings" rule to parse-resume API as well
+- Build verified successfully
+
+Stage Summary:
+- All runtime errors fixed (hydration already fixed, .trim() error fixed in 4 locations)
+- AI tailor now explicitly edits ALL resume sections, not just summary
+- Additional instructions now apply across entire resume with clear examples
+- Both parse-resume and tailor-resume APIs enforce plain string certifications
+- Defensive coding added in store, preview, form, and PDF generation

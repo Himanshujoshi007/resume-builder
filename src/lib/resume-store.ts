@@ -18,10 +18,22 @@ function normalizeResumeData(data: unknown): ResumeData {
     : {} as Record<string, unknown>;
 
   // Normalize certifications: ensure all items are strings
+  // If AI returns objects like {name: "AWS Certified"}, extract the name/value
   const rawCerts = Array.isArray(d.certifications) ? d.certifications : [];
   const certifications = rawCerts.map((c: unknown) => {
     if (typeof c === 'string') return c;
-    if (typeof c === 'object' && c !== null) return JSON.stringify(c);
+    if (typeof c === 'object' && c !== null) {
+      const obj = c as Record<string, unknown>;
+      // Try common property names AI might use
+      if (typeof obj.name === 'string' && obj.name.trim()) return obj.name;
+      if (typeof obj.certification === 'string' && obj.certification.trim()) return obj.certification;
+      if (typeof obj.title === 'string' && obj.title.trim()) return obj.title;
+      if (typeof obj.value === 'string' && obj.value.trim()) return obj.value;
+      // Fallback: concatenate all string values
+      const strVals = Object.values(obj).filter((v): v is string => typeof v === 'string' && v.trim());
+      if (strVals.length > 0) return strVals.join(' - ');
+      return JSON.stringify(c);
+    }
     return String(c);
   }).filter((s: string) => s.trim().length > 0);
 
