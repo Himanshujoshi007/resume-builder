@@ -11,6 +11,7 @@ import { EducationForm } from '@/components/resume/education-form';
 import { ProjectsForm } from '@/components/resume/projects-form';
 import { ResumePreview } from '@/components/resume/resume-preview';
 import { TailorDialog } from '@/components/resume/tailor-dialog';
+import { UploadResumeDialog } from '@/components/resume/upload-resume-dialog';
 import {
   Accordion,
   AccordionContent,
@@ -20,12 +21,24 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileDown, RotateCcw, Loader2, FileText, Eye } from 'lucide-react';
+import {
+  FileDown,
+  RotateCcw,
+  Loader2,
+  FileText,
+  Eye,
+  Upload,
+  Sparkles,
+  PenLine,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
-  const { resumeData, resetResume } = useResumeStore();
+  const { resumeData, resetResume, setResumeData } = useResumeStore();
   const [downloading, setDownloading] = useState(false);
+  const [tailorOpen, setTailorOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [started, setStarted] = useState(false);
   const { toast } = useToast();
 
   const handleDownloadPDF = async () => {
@@ -73,6 +86,26 @@ export default function Home() {
       title: 'Resume Reset',
       description: 'Resume has been reset to default data.',
     });
+  };
+
+  const handleStartBlank = () => {
+    setResumeData({
+      personalInfo: {
+        fullName: '',
+        jobTitle: '',
+        email: '',
+        phone: '',
+        location: '',
+        linkedin: '',
+      },
+      summary: '',
+      certifications: [],
+      skills: [],
+      experience: [],
+      education: [],
+      projects: [],
+    });
+    setStarted(true);
   };
 
   const formSections = (
@@ -146,6 +179,108 @@ export default function Home() {
     </Accordion>
   );
 
+  // Welcome / Start Screen
+  if (!started) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">
+        {/* Header */}
+        <header className="border-b bg-white/80 backdrop-blur-sm">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-2">
+            <FileText className="h-6 w-6 text-slate-700" />
+            <h1 className="text-xl font-bold text-slate-800">Resume Builder</h1>
+          </div>
+        </header>
+
+        {/* Welcome Content */}
+        <main className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-2xl w-full text-center space-y-8">
+            {/* Hero Section */}
+            <div className="space-y-3">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100 mb-2">
+                <FileText className="h-8 w-8 text-slate-600" />
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+                Build Your Perfect Resume
+              </h2>
+              <p className="text-lg text-slate-500 max-w-lg mx-auto">
+                Upload an existing resume to edit, create one from scratch, or let AI tailor your resume for any job.
+              </p>
+            </div>
+
+            {/* Action Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl mx-auto">
+              {/* Upload Resume */}
+              <button
+                onClick={() => setUploadOpen(true)}
+                className="group flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all duration-200 text-left"
+              >
+                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                  <Upload className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800 text-sm">Upload Resume</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Import from PDF</p>
+                </div>
+              </button>
+
+              {/* Start Blank */}
+              <button
+                onClick={handleStartBlank}
+                className="group flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200 text-left"
+              >
+                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                  <PenLine className="h-5 w-5 text-slate-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800 text-sm">Start Blank</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Create from scratch</p>
+                </div>
+              </button>
+
+              {/* AI Tailor */}
+              <button
+                onClick={() => {
+                  setStarted(true);
+                  setTimeout(() => setTailorOpen(true), 300);
+                }}
+                className="group flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-slate-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all duration-200 text-left"
+              >
+                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+                  <Sparkles className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800 text-sm">AI Tailor</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Optimize for a job</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Tip */}
+            <p className="text-xs text-slate-400">
+              Upload your existing resume PDF and we&apos;ll automatically extract all the information for you
+            </p>
+          </div>
+        </main>
+
+        {/* Upload Dialog */}
+        <UploadResumeDialog
+          open={uploadOpen}
+          onOpenChange={(open) => {
+            setUploadOpen(open);
+            if (!open) {
+              // If a resume was loaded (has a name), transition to editor
+              const currentData = useResumeStore.getState().resumeData;
+              if (currentData.personalInfo.fullName.trim()) {
+                setStarted(true);
+              }
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Main Editor View
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       {/* Top Toolbar */}
@@ -159,13 +294,22 @@ export default function Home() {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setUploadOpen(true)}
+              className="gap-2 text-slate-600"
+            >
+              <Upload className="h-4 w-4" />
+              <span className="hidden sm:inline">Upload</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleReset}
               className="gap-2 text-slate-600"
             >
               <RotateCcw className="h-4 w-4" />
               <span className="hidden sm:inline">Reset</span>
             </Button>
-            <TailorDialog />
+            <TailorDialog open={tailorOpen} onOpenChange={setTailorOpen} />
             <Button
               size="sm"
               onClick={handleDownloadPDF}
@@ -239,6 +383,9 @@ export default function Home() {
           </Tabs>
         </div>
       </main>
+
+      {/* Upload Dialog (from toolbar) */}
+      <UploadResumeDialog open={uploadOpen} onOpenChange={setUploadOpen} />
     </div>
   );
 }

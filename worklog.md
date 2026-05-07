@@ -24,3 +24,25 @@ Stage Summary:
 - Features: Create/Edit resume, Live preview, PDF download, AI-powered resume tailoring
 - All API routes working (generate-pdf, tailor-resume)
 - App accessible at localhost:3000
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Add Resume Upload Feature with PDF Parsing
+
+Work Log:
+- Installed pdfplumber Python library for PDF text extraction
+- Created /api/parse-resume API route that extracts text from uploaded PDF and uses AI to parse it into ResumeData structure
+- Created UploadResumeDialog component with drag-and-drop file upload support
+- Redesigned main page to include a Welcome/Start screen with 3 options: Upload Resume, Start Blank, AI Tailor
+- Added Upload button to the editor toolbar for re-uploading resumes
+- Updated TailorDialog to support both controlled and uncontrolled modes
+- Fixed welcome screen transition logic after successful upload
+- Ran lint - all passes
+- Verified dev server running with 200 responses
+
+Stage Summary:
+- Users can now upload an existing resume PDF at the start screen
+- The PDF is parsed using pdfplumber + AI to extract all resume data
+- Welcome screen provides 3 entry points: Upload, Start Blank, AI Tailor
+- Upload button also available in toolbar for re-uploading anytime

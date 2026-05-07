@@ -18,12 +18,21 @@ import { Label } from '@/components/ui/label';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export function TailorDialog() {
-  const [open, setOpen] = useState(false);
+interface TailorDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function TailorDialog({ open: controlledOpen, onOpenChange: controlledOnOpenChange }: TailorDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const { resumeData, setResumeData } = useResumeStore();
   const { toast } = useToast();
+
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange !== undefined ? controlledOnOpenChange : setInternalOpen;
 
   const handleTailor = async () => {
     if (!jobDescription.trim()) {
@@ -73,12 +82,65 @@ export function TailorDialog() {
     }
   };
 
+  // If controlled (no DialogTrigger needed when parent controls open state),
+  // only render the Dialog without trigger when controlled
+  if (controlledOpen !== undefined) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>AI Tailor Resume</DialogTitle>
+            <DialogDescription>
+              Paste a job description below and our AI will tailor your resume to better match the position.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="job-description">Job Description</Label>
+              <Textarea
+                id="job-description"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Paste the full job description here..."
+                rows={10}
+                className="resize-y"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleTailor} disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Tailoring...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Tailor Resume
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Uncontrolled mode with DialogTrigger (for toolbar)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Sparkles className="h-4 w-4" />
-          AI Tailor Resume
+          AI Tailor
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
