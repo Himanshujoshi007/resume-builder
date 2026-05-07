@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2 } from 'lucide-react';
+import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function ExperienceForm() {
   const { resumeData, setExperience } = useResumeStore();
@@ -57,6 +58,9 @@ export function ExperienceForm() {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <SectionTailorButton section="experience" sectionLabel="Professional Experience" />
+      </div>
       {experience.map((exp, expIndex) => (
         <div key={expIndex} className="space-y-3 rounded-lg border p-3">
           <div className="flex items-center justify-between">

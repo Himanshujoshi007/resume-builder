@@ -46,3 +46,25 @@ Stage Summary:
 - The PDF is parsed using pdfplumber + AI to extract all resume data
 - Welcome screen provides 3 entry points: Upload, Start Blank, AI Tailor
 - Upload button also available in toolbar for re-uploading anytime
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Enhance AI Tailor with section-level buttons, additional instructions, and match score
+
+Work Log:
+- Updated /api/tailor-resume to accept additionalInstructions and section params
+- API now returns matchScore with breakdown (skills, experience, education, keywords, overallFit) and improvements list
+- Created MatchScoreDisplay component with animated score ring, breakdown bars, and improvement list
+- Created SectionTailorButton component for per-section AI tailoring
+- Updated TailorDialog with 2-step flow: Step 1 (Job Description), Step 2 (Additional Instructions - collapsible)
+- Added SectionTailorButton to all 7 form sections (personalInfo, summary, certifications, skills, experience, education, projects)
+- Made TailorDialog support both controlled and uncontrolled modes
+- Added AI Tailor dialog to welcome screen
+- Lint passes, dev server running
+
+Stage Summary:
+- Every form section now has an "AI Tailor" button for section-specific optimization
+- TailorDialog has 2-step flow with job description + additional instructions
+- Match score displayed after tailoring with animated breakdown
+- Works for uploaded resumes, new blank resumes, and existing data

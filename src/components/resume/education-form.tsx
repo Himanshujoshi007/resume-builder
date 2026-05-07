@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2 } from 'lucide-react';
+import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function EducationForm() {
   const { resumeData, setEducation } = useResumeStore();
@@ -30,6 +31,9 @@ export function EducationForm() {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <SectionTailorButton section="education" sectionLabel="Education" />
+      </div>
       {education.map((edu, index) => (
         <div key={index} className="space-y-3 rounded-lg border p-3">
           <div className="flex items-center justify-between">

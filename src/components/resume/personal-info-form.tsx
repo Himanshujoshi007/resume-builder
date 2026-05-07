@@ -3,6 +3,7 @@
 import { useResumeStore } from '@/lib/resume-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function PersonalInfoForm() {
   const { resumeData, setPersonalInfo } = useResumeStore();
@@ -14,6 +15,9 @@ export function PersonalInfoForm() {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <SectionTailorButton section="personalInfo" sectionLabel="Personal Information" />
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="fullName">Full Name</Label>

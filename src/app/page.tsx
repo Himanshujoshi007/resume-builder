@@ -276,6 +276,9 @@ export default function Home() {
             }
           }}
         />
+
+        {/* AI Tailor Dialog (for welcome screen) */}
+        <TailorDialog open={tailorOpen} onOpenChange={setTailorOpen} />
       </div>
     );
   }

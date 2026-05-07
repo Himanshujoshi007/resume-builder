@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2 } from 'lucide-react';
+import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function ProjectsForm() {
   const { resumeData, setProjects } = useResumeStore();
@@ -54,6 +55,9 @@ export function ProjectsForm() {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <SectionTailorButton section="projects" sectionLabel="Projects" />
+      </div>
       {projects.map((proj, projIndex) => (
         <div key={projIndex} className="space-y-3 rounded-lg border p-3">
           <div className="flex items-center justify-between">
