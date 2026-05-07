@@ -1,17 +1,128 @@
 'use client';
 
 import { useResumeStore } from '@/lib/resume-store';
+import type { ResumeData } from '@/lib/resume-types';
+
+// Helper: safely convert any value to a string
+function safeStr(val: unknown): string {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  if (typeof val === 'object') return JSON.stringify(val);
+  return String(val);
+}
+
+// Helper: safely get an array, filtering to valid strings
+function safeStringArray(arr: unknown): string[] {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map(item => {
+      if (typeof item === 'string') return item;
+      if (typeof item === 'object' && item !== null) {
+        // If AI returned an object instead of a string, try to stringify it
+        return JSON.stringify(item);
+      }
+      return String(item);
+    })
+    .filter(s => s.trim().length > 0);
+}
+
+// Helper: safely get skills array with proper shape
+function safeSkills(arr: unknown): { category: string; skills: string }[] {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map(item => {
+      if (typeof item === 'string') {
+        // If AI returned a plain string, make it a category
+        return { category: item, skills: '' };
+      }
+      if (typeof item === 'object' && item !== null) {
+        return {
+          category: safeStr((item as Record<string, unknown>).category),
+          skills: safeStr((item as Record<string, unknown>).skills),
+        };
+      }
+      return null;
+    })
+    .filter((s): s is { category: string; skills: string } => s !== null && (s.category.trim().length > 0 || s.skills.trim().length > 0));
+}
+
+// Helper: safely get experience array
+function safeExperience(arr: unknown): { jobTitle: string; company: string; startDate: string; endDate: string; location: string; bullets: string[] }[] {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map(item => {
+      if (typeof item !== 'object' || item === null) return null;
+      const obj = item as Record<string, unknown>;
+      return {
+        jobTitle: safeStr(obj.jobTitle),
+        company: safeStr(obj.company),
+        startDate: safeStr(obj.startDate),
+        endDate: safeStr(obj.endDate),
+        location: safeStr(obj.location),
+        bullets: safeStringArray(obj.bullets),
+      };
+    })
+    .filter((e): e is { jobTitle: string; company: string; startDate: string; endDate: string; location: string; bullets: string[] } =>
+      e !== null && (e.jobTitle.trim().length > 0 || e.company.trim().length > 0)
+    );
+}
+
+// Helper: safely get education array
+function safeEducation(arr: unknown): { degree: string; startDate: string; endDate: string; school: string; location: string }[] {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map(item => {
+      if (typeof item !== 'object' || item === null) return null;
+      const obj = item as Record<string, unknown>;
+      return {
+        degree: safeStr(obj.degree),
+        startDate: safeStr(obj.startDate),
+        endDate: safeStr(obj.endDate),
+        school: safeStr(obj.school),
+        location: safeStr(obj.location),
+      };
+    })
+    .filter((e): e is { degree: string; startDate: string; endDate: string; school: string; location: string } =>
+      e !== null && (e.degree.trim().length > 0 || e.school.trim().length > 0)
+    );
+}
+
+// Helper: safely get projects array
+function safeProjects(arr: unknown): { title: string; bullets: string[] }[] {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map(item => {
+      if (typeof item !== 'object' || item === null) return null;
+      const obj = item as Record<string, unknown>;
+      return {
+        title: safeStr(obj.title),
+        bullets: safeStringArray(obj.bullets),
+      };
+    })
+    .filter((p): p is { title: string; bullets: string[] } =>
+      p !== null && p.title.trim().length > 0
+    );
+}
 
 export function ResumePreview() {
   const { resumeData } = useResumeStore();
-  const { personalInfo, summary, certifications, skills, experience, education, projects } = resumeData;
+
+  // Normalize all data defensively
+  const personalInfo = resumeData?.personalInfo || { fullName: '', jobTitle: '', email: '', phone: '', location: '', linkedin: '' };
+  const summary = safeStr(resumeData?.summary);
+  const certifications = safeStringArray(resumeData?.certifications);
+  const skills = safeSkills(resumeData?.skills);
+  const experience = safeExperience(resumeData?.experience);
+  const education = safeEducation(resumeData?.education);
+  const projects = safeProjects(resumeData?.projects);
 
   const contactParts = [
     personalInfo.email,
     personalInfo.phone,
     personalInfo.location,
     personalInfo.linkedin,
-  ].filter(Boolean);
+  ].filter(s => s && s.trim());
 
   return (
     <div className="bg-white text-black p-8 sm:p-10 shadow-lg rounded-sm" style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '10pt', lineHeight: '1.4' }}>
@@ -33,7 +144,7 @@ export function ResumePreview() {
       )}
 
       {/* Summary */}
-      {summary && (
+      {summary.trim() && (
         <div className="mb-1">
           <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Summary
@@ -43,12 +154,12 @@ export function ResumePreview() {
       )}
 
       {/* Certifications */}
-      {certifications.length > 0 && certifications.some(c => c.trim()) && (
+      {certifications.length > 0 && (
         <div className="mb-1">
           <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Certifications
           </h2>
-          {certifications.filter(c => c.trim()).map((cert, i) => (
+          {certifications.map((cert, i) => (
             <p key={i} className="ml-4 mb-0.5" style={{ fontSize: '10pt' }}>
               • {cert}
             </p>
@@ -57,26 +168,26 @@ export function ResumePreview() {
       )}
 
       {/* Technical Skills */}
-      {skills.length > 0 && skills.some(s => s.category.trim() || s.skills.trim()) && (
+      {skills.length > 0 && (
         <div className="mb-1">
           <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Technical Skills
           </h2>
-          {skills.filter(s => s.category.trim() || s.skills.trim()).map((skill, i) => (
+          {skills.map((skill, i) => (
             <p key={i} className="ml-4 mb-1" style={{ fontSize: '10pt' }}>
-              • <span className="font-bold">{skill.category}</span>: {skill.skills}
+              • <span className="font-bold">{skill.category}</span>{skill.skills ? `: ${skill.skills}` : ''}
             </p>
           ))}
         </div>
       )}
 
       {/* Professional Experience */}
-      {experience.length > 0 && experience.some(e => e.jobTitle.trim() || e.company.trim()) && (
+      {experience.length > 0 && (
         <div className="mb-1">
           <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Professional Experience
           </h2>
-          {experience.filter(e => e.jobTitle.trim() || e.company.trim()).map((exp, i) => (
+          {experience.map((exp, i) => (
             <div key={i} className="mb-3">
               <div className="flex justify-between items-baseline">
                 <span className="font-bold" style={{ fontSize: '10pt' }}>
@@ -86,7 +197,7 @@ export function ResumePreview() {
                   {exp.startDate}{exp.endDate ? ` – ${exp.endDate}` : ''}{exp.location ? ` | ${exp.location}` : ''}
                 </span>
               </div>
-              {exp.bullets.filter(b => b.trim()).map((bullet, j) => (
+              {exp.bullets.map((bullet, j) => (
                 <p key={j} className="ml-4 mb-0.5 text-justify" style={{ fontSize: '10pt' }}>
                   • {bullet}
                 </p>
@@ -97,12 +208,12 @@ export function ResumePreview() {
       )}
 
       {/* Education */}
-      {education.length > 0 && education.some(e => e.degree.trim() || e.school.trim()) && (
+      {education.length > 0 && (
         <div className="mb-1">
           <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Education
           </h2>
-          {education.filter(e => e.degree.trim() || e.school.trim()).map((edu, i) => (
+          {education.map((edu, i) => (
             <div key={i} className="mb-2">
               <div className="flex justify-between items-baseline">
                 <span className="font-bold" style={{ fontSize: '10pt' }}>{edu.degree}</span>
@@ -117,15 +228,15 @@ export function ResumePreview() {
       )}
 
       {/* Projects */}
-      {projects.length > 0 && projects.some(p => p.title.trim()) && (
+      {projects.length > 0 && (
         <div className="mb-1">
           <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Projects
           </h2>
-          {projects.filter(p => p.title.trim()).map((proj, i) => (
+          {projects.map((proj, i) => (
             <div key={i} className="mb-2">
               <p className="font-bold italic" style={{ fontSize: '10pt' }}>{proj.title}</p>
-              {proj.bullets.filter(b => b.trim()).map((bullet, j) => (
+              {proj.bullets.map((bullet, j) => (
                 <p key={j} className="ml-4 mb-0.5 text-justify" style={{ fontSize: '10pt' }}>
                   • {bullet}
                 </p>

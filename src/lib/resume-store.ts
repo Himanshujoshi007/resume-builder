@@ -1,6 +1,112 @@
 import { create } from 'zustand';
 import type { ResumeData } from './resume-types';
 
+// Safely convert any value to string
+function safeStr(val: unknown, fallback = ''): string {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  return fallback;
+}
+
+// Normalize resume data from potentially malformed AI responses
+function normalizeResumeData(data: unknown): ResumeData {
+  const d = (data && typeof data === 'object') ? data as Record<string, unknown> : {};
+
+  const personalInfo = (d.personalInfo && typeof d.personalInfo === 'object')
+    ? d.personalInfo as Record<string, unknown>
+    : {} as Record<string, unknown>;
+
+  // Normalize certifications: ensure all items are strings
+  const rawCerts = Array.isArray(d.certifications) ? d.certifications : [];
+  const certifications = rawCerts.map((c: unknown) => {
+    if (typeof c === 'string') return c;
+    if (typeof c === 'object' && c !== null) return JSON.stringify(c);
+    return String(c);
+  }).filter((s: string) => s.trim().length > 0);
+
+  // Normalize skills: ensure all items have { category: string, skills: string }
+  const rawSkills = Array.isArray(d.skills) ? d.skills : [];
+  const skills = rawSkills.map((s: unknown) => {
+    if (typeof s === 'string') return { category: s, skills: '' };
+    if (typeof s === 'object' && s !== null) {
+      const obj = s as Record<string, unknown>;
+      return {
+        category: safeStr(obj.category),
+        skills: safeStr(obj.skills),
+      };
+    }
+    return null;
+  }).filter((s): s is { category: string; skills: string } => s !== null);
+
+  // Normalize experience
+  const rawExp = Array.isArray(d.experience) ? d.experience : [];
+  const experience = rawExp.map((e: unknown) => {
+    if (typeof e !== 'object' || e === null) return null;
+    const obj = e as Record<string, unknown>;
+    const rawBullets = Array.isArray(obj.bullets) ? obj.bullets : [];
+    const bullets = rawBullets.map((b: unknown) => {
+      if (typeof b === 'string') return b;
+      return String(b);
+    }).filter((b: string) => b.trim().length > 0);
+    return {
+      jobTitle: safeStr(obj.jobTitle),
+      company: safeStr(obj.company),
+      startDate: safeStr(obj.startDate),
+      endDate: safeStr(obj.endDate),
+      location: safeStr(obj.location),
+      bullets,
+    };
+  }).filter((e): e is ResumeData['experience'][0] => e !== null);
+
+  // Normalize education
+  const rawEdu = Array.isArray(d.education) ? d.education : [];
+  const education = rawEdu.map((e: unknown) => {
+    if (typeof e !== 'object' || e === null) return null;
+    const obj = e as Record<string, unknown>;
+    return {
+      degree: safeStr(obj.degree),
+      startDate: safeStr(obj.startDate),
+      endDate: safeStr(obj.endDate),
+      school: safeStr(obj.school),
+      location: safeStr(obj.location),
+    };
+  }).filter((e): e is ResumeData['education'][0] => e !== null);
+
+  // Normalize projects
+  const rawProj = Array.isArray(d.projects) ? d.projects : [];
+  const projects = rawProj.map((p: unknown) => {
+    if (typeof p !== 'object' || p === null) return null;
+    const obj = p as Record<string, unknown>;
+    const rawBullets = Array.isArray(obj.bullets) ? obj.bullets : [];
+    const bullets = rawBullets.map((b: unknown) => {
+      if (typeof b === 'string') return b;
+      return String(b);
+    }).filter((b: string) => b.trim().length > 0);
+    return {
+      title: safeStr(obj.title),
+      bullets,
+    };
+  }).filter((p): p is ResumeData['projects'][0] => p !== null);
+
+  return {
+    personalInfo: {
+      fullName: safeStr(personalInfo.fullName),
+      jobTitle: safeStr(personalInfo.jobTitle),
+      email: safeStr(personalInfo.email),
+      phone: safeStr(personalInfo.phone),
+      location: safeStr(personalInfo.location),
+      linkedin: safeStr(personalInfo.linkedin),
+    },
+    summary: safeStr(d.summary),
+    certifications,
+    skills,
+    experience,
+    education,
+    projects,
+  };
+}
+
 const defaultResumeData: ResumeData = {
   personalInfo: {
     fullName: "Soumya Merugu",
@@ -125,7 +231,7 @@ export const useResumeStore = create<ResumeStore>((set) => ({
   setProjects: (projects) =>
     set((state) => ({ resumeData: { ...state.resumeData, projects } })),
 
-  setResumeData: (data) => set({ resumeData: data }),
+  setResumeData: (data) => set({ resumeData: normalizeResumeData(data) }),
 
   resetResume: () => set({ resumeData: defaultResumeData }),
 }));
