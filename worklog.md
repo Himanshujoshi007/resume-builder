@@ -128,3 +128,48 @@ Stage Summary:
 - Personalized instructions override and guide AI behavior
 - Match score still shown after tailoring
 - All old unused components removed (tailor-dialog, section-tailor-button, upload-resume-dialog)
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Add login system with admin panel, client subscription management, and auto-expiration
+
+Work Log:
+- Set up Prisma with SQLite, created User model (username, password, role, isActive, activatedAt)
+- Created auth library (lib/auth.ts) with JWT token create/verify using jose
+- Created auth-server library (lib/auth-server.ts) for server-side session using cookies
+- Created 7 API routes:
+  - POST /api/auth/login — validates credentials, checks subscription, sets JWT cookie
+  - GET /api/auth/me — returns current session
+  - POST /api/auth/create-client — admin creates client (starts inactive)
+  - POST /api/auth/toggle-client — admin toggles ON/OFF (ON resets 30-day countdown)
+  - GET /api/auth/list-clients — lists all clients with countdown info
+  - POST /api/auth/logout — clears cookie
+  - POST /api/auth/seed-admin — seeds admin account
+  - GET /api/auth/subscription — client checks their own subscription
+- Created /login page with username/password form
+- Created /admin page with:
+  - Stats cards (total clients, active, inactive/expired)
+  - Create new client form
+  - Client list with toggle switches, countdown bars, progress indicators
+  - Info section explaining the system
+- Added middleware.ts to protect all routes (redirects to /login if not authenticated)
+- Added auth check to main page.tsx with:
+  - Subscription countdown badge in header for clients
+  - Mobile subscription banner
+  - Expired screen for clients whose subscription ended
+  - Logout button
+  - Admin link for admin users
+- Seeded admin account: username=admin, password=Admin@2026
+- Tested full flow: admin login → create client → toggle ON → client login → subscription check
+
+Stage Summary:
+- Complete auth system with admin and client roles
+- Admin can create client accounts with username/password
+- Each client has a toggle (ON/OFF) in the admin dashboard
+- Toggle ON starts a 30-day countdown (activatedAt = now)
+- Toggle OFF immediately revokes access
+- After 30 days, client access is automatically disabled
+- Clients see days remaining in the header
+- Expired clients see a "Subscription Expired" screen and can't use the app
+- Admin must manually toggle ON to renew (resets the 30-day countdown)
