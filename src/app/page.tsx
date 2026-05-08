@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react';
 import { useResumeStore } from '@/lib/resume-store';
 import type { ResumeData } from '@/lib/resume-types';
-import { extractTextFromPDF } from '@/lib/pdf-extractor';
 import { generateResumePDF } from '@/lib/pdf-generator';
 import { PersonalInfoForm } from '@/components/resume/personal-info-form';
 import { SummaryForm } from '@/components/resume/summary-form';
@@ -93,24 +92,14 @@ export default function Home() {
     if (!selectedFile) return;
     setUploading(true);
     try {
-      // Step 1: Extract text from PDF in the browser (no server needed!)
-      let extractedText = '';
-      try {
-        extractedText = await extractTextFromPDF(selectedFile);
-      } catch (pdfErr) {
-        console.error('PDF extraction error:', pdfErr);
-        throw new Error('Could not read the PDF file. Please ensure it is a valid PDF with selectable text.');
-      }
+      // Simply send the PDF file to the server
+      // The server uses AI Vision to read the PDF directly - NO PDF library needed!
+      const formData = new FormData();
+      formData.append('resume', selectedFile);
 
-      if (!extractedText || extractedText.trim().length === 0) {
-        throw new Error('Could not extract text from the PDF. Please ensure it contains selectable text (not a scanned image).');
-      }
-
-      // Step 2: Send extracted text to API for AI structuring
       const response = await fetch('/api/parse-resume', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: extractedText }),
+        body: formData,
       });
 
       if (!response.ok) {

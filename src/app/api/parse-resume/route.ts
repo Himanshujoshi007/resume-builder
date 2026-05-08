@@ -4,22 +4,45 @@ import type { ResumeData } from '@/lib/resume-types';
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const formData = await request.formData();
+    const file = formData.get('resume') as File | null;
 
-    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+    if (!file) {
       return NextResponse.json(
-        { error: 'No resume text provided' },
+        { error: 'No file uploaded' },
         { status: 400 }
       );
     }
 
-    // Use AI to parse the extracted text into ResumeData structure
+    // Validate file type
+    if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+      return NextResponse.json(
+        { error: 'Only PDF files are supported' },
+        { status: 400 }
+      );
+    }
+
+    // Convert file to base64
+    const bytes = await file.arrayBuffer();
+    const base64 = Buffer.from(bytes).toString('base64');
+    const dataUrl = `data:application/pdf;base64,${base64}`;
+
+    // Use AI Vision API to read the PDF directly - NO PDF library needed!
+    // The AI can natively read PDF documents via the file_url content type.
     const zai = await ZAI.create();
 
-    const prompt = `You are a resume parsing expert. Parse the following resume text and convert it into a structured JSON format.
-
-RESUME TEXT:
-${text}
+    const response = await zai.chat.completions.createVision({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a resume parsing expert. Always respond with valid JSON only. No markdown, no explanation.'
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Read this PDF resume and convert it into a structured JSON format.
 
 Return the result as a valid JSON object with EXACTLY this structure:
 {
@@ -72,21 +95,31 @@ Rules:
 - Keep all information exactly as written in the resume - do not modify or fabricate
 - For skills, group them into logical categories based on how they appear in the resume
 - If skills are listed as a simple list without categories, create appropriate categories
-- IMPORTANT: certifications MUST be an array of plain strings, NOT objects. Example: ["AWS Certified Cloud Practitioner", "PL-300"]
-- IMPORTANT: Return ONLY the JSON object, no markdown code fences, no explanation`;
-
-    const completion = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a resume parsing expert. Always respond with valid JSON only. No markdown, no explanation.'
-        },
-        { role: 'user', content: prompt }
+- IMPORTANT: certifications MUST be an array of plain strings, NOT objects
+- IMPORTANT: Return ONLY the JSON object, no markdown code fences, no explanation`
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: dataUrl
+              }
+            }
+          ]
+        }
       ],
-      temperature: 0.1,
+      thinking: { type: 'disabled' }
     });
 
-    const responseText = completion.choices[0]?.message?.content || '';
+    const responseText = response.choices[0]?.message?.content || '';
+
+    if (!responseText || responseText.trim().length === 0) {
+      return NextResponse.json(
+        { error: 'Could not read the PDF. Please ensure it is a valid resume with selectable text.' },
+        { status: 400 }
+      );
+    }
+
+    // Clean and parse the JSON response
     const cleanedResponse = responseText
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
@@ -98,7 +131,7 @@ Rules:
   } catch (error) {
     console.error('Resume parsing error:', error);
     return NextResponse.json(
-      { error: 'Failed to parse resume. Please ensure the PDF contains selectable text.' },
+      { error: 'Failed to parse resume. Please ensure the PDF is a valid resume with selectable text.' },
       { status: 500 }
     );
   }
