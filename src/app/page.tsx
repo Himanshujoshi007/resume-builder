@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useResumeStore } from '@/lib/resume-store';
 import type { ResumeData } from '@/lib/resume-types';
 import { generateResumePDF } from '@/lib/pdf-generator';
@@ -30,7 +30,7 @@ import {
   Loader2,
   FileText,
   Eye,
-  Upload,
+  ClipboardPaste,
   Sparkles,
   ChevronDown,
   ChevronUp,
@@ -43,11 +43,9 @@ export default function Home() {
   const { resumeData, resetResume, setResumeData } = useResumeStore();
   const [downloading, setDownloading] = useState(false);
 
-  // Upload state
-  const [uploading, setUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Paste state
+  const [resumeText, setResumeText] = useState('');
+  const [parsing, setParsing] = useState(false);
 
   // AI Tailor state
   const [jobDescription, setJobDescription] = useState('');
@@ -56,50 +54,23 @@ export default function Home() {
   const [tailoring, setTailoring] = useState(false);
   const [matchScore, setMatchScore] = useState<MatchScore | null>(null);
 
-  // Flow state: false = upload screen, true = editor
+  // Flow state: false = paste screen, true = editor
   const [hasResume, setHasResume] = useState(false);
 
   const { toast } = useToast();
 
-  // ─── Upload handlers ───────────────────────────────────────
-  const handleFileSelect = (file: File) => {
-    if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
-      toast({ title: 'Invalid File', description: 'Please upload a PDF file.', variant: 'destructive' });
+  // ─── Parse pasted resume ──────────────────────────────────
+  const handleParse = async () => {
+    if (!resumeText.trim()) {
+      toast({ title: 'Empty Resume', description: 'Please paste your resume text first.', variant: 'destructive' });
       return;
     }
-    setSelectedFile(file);
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
-    else if (e.type === 'dragleave') setDragActive(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) handleFileSelect(e.target.files[0]);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-    setUploading(true);
+    setParsing(true);
     try {
-      // Send the PDF file to the server
-      // Server uses unpdf (serverless-compatible) to extract text, then AI structures it
-      const formData = new FormData();
-      formData.append('resume', selectedFile);
-
       const response = await fetch('/api/parse-resume', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: resumeText.trim() }),
       });
 
       if (!response.ok) {
@@ -120,14 +91,14 @@ export default function Home() {
 
       const data = await response.json();
       setResumeData(data.resumeData as ResumeData);
-      setSelectedFile(null);
+      setResumeText('');
       setHasResume(true);
-      toast({ title: 'Resume Uploaded', description: 'Your resume has been parsed successfully. You can now edit and tailor it.' });
+      toast({ title: 'Resume Parsed', description: 'Your resume has been structured successfully. You can now edit and tailor it.' });
     } catch (error) {
-      console.error('Upload error:', error);
-      toast({ title: 'Upload Failed', description: error instanceof Error ? error.message : 'Failed to parse resume.', variant: 'destructive' });
+      console.error('Parse error:', error);
+      toast({ title: 'Parse Failed', description: error instanceof Error ? error.message : 'Failed to parse resume.', variant: 'destructive' });
     } finally {
-      setUploading(false);
+      setParsing(false);
     }
   };
 
@@ -180,7 +151,7 @@ export default function Home() {
     }
   };
 
-  // ─── PDF Download (client-side, no server needed!) ──────────
+  // ─── PDF Download (client-side) ────────────────────────────
   const handleDownloadPDF = async () => {
     setDownloading(true);
     try {
@@ -197,13 +168,14 @@ export default function Home() {
   const handleReset = () => {
     resetResume();
     setHasResume(false);
+    setResumeText('');
     setJobDescription('');
     setPersonalInstructions('');
     setMatchScore(null);
     toast({ title: 'Reset', description: 'Resume has been reset.' });
   };
 
-  // ─── UPLOAD SCREEN ─────────────────────────────────────────
+  // ─── PASTE SCREEN ─────────────────────────────────────────
   if (!hasResume) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0a0a] via-[#111] to-[#0a0a0a]">
@@ -215,91 +187,92 @@ export default function Home() {
         </header>
 
         <main className="flex-1 flex items-center justify-center p-4">
-          <div className="max-w-xl w-full text-center space-y-8">
+          <div className="max-w-2xl w-full text-center space-y-6">
             <div className="space-y-3">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#d4a017]/15 border border-[#d4a017]/30 mb-2">
-                <Upload className="h-8 w-8 text-[#d4a017]" />
+                <ClipboardPaste className="h-8 w-8 text-[#d4a017]" />
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-[#fafafa] tracking-tight">
-                Upload Your Resume
+                Paste Your Resume
               </h2>
               <p className="text-lg text-[#a0a0a0] max-w-lg mx-auto">
-                Upload your existing resume PDF and we&apos;ll extract everything automatically. Then you can edit and tailor it for any job.
+                Copy the text from your resume and paste it below. AI will structure it automatically so you can edit and tailor it for any job.
               </p>
             </div>
 
-            {/* Drop Zone */}
-            <div
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              onClick={() => !selectedFile && fileInputRef.current?.click()}
-              className={`
-                relative border-2 border-dashed rounded-xl p-10 text-center cursor-pointer
-                transition-all duration-200
-                ${dragActive
-                  ? 'border-[#d4a017] bg-[#d4a017]/10 scale-[1.02]'
-                  : selectedFile
-                    ? 'border-[#d4a017]/60 bg-[#d4a017]/5'
-                    : 'border-[#2a2a2a] hover:border-[#d4a017]/60 hover:bg-[#141414]'
-                }
-              `}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,application/pdf"
-                onChange={handleInputChange}
-                className="hidden"
+            {/* Paste Area */}
+            <div className="space-y-3">
+              <Textarea
+                value={resumeText}
+                onChange={(e) => setResumeText(e.target.value)}
+                placeholder={`Paste your entire resume text here, for example:
+
+John Doe
+Senior Software Engineer
+john@email.com | (123) 456-7890 | New York, NY | linkedin.com/in/johndoe
+
+PROFESSIONAL SUMMARY
+Experienced software engineer with 5+ years...
+
+SKILLS
+Python, JavaScript, React, Node.js, SQL, AWS...
+
+EXPERIENCE
+Software Engineer at Google (01/2020 – Present)
+• Led development of...
+• Built scalable APIs...
+
+Software Developer at Startup (06/2017 – 12/2019)
+• Implemented...
+
+EDUCATION
+B.S. Computer Science, NYU (2017)
+
+CERTIFICATIONS
+AWS Solutions Architect, Google Cloud Professional...
+
+PROJECTS
+E-Commerce Platform
+• Built full-stack application...`}
+                rows={16}
+                className="resize-y text-sm bg-[#0d0d0d] border-[#2a2a2a] text-[#fafafa] placeholder:text-[#444] focus:border-[#d4a017] rounded-xl"
               />
-              {selectedFile ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-14 h-14 rounded-full bg-[#d4a017]/15 flex items-center justify-center">
-                    <FileText className="h-7 w-7 text-[#d4a017]" />
-                  </div>
-                  <p className="font-semibold text-[#fafafa]">{selectedFile.name}</p>
-                  <p className="text-sm text-[#a0a0a0]">{(selectedFile.size / 1024).toFixed(1)} KB</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => { e.stopPropagation(); setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                    className="text-xs text-[#a0a0a0] hover:text-[#fafafa]"
+
+              <div className="flex items-center justify-between text-xs text-[#555]">
+                <span>{resumeText.length > 0 ? `${resumeText.length.toLocaleString()} characters` : 'Paste your resume above'}</span>
+                {resumeText.length > 0 && (
+                  <button
+                    onClick={() => setResumeText('')}
+                    className="text-[#888] hover:text-[#d4a017] transition-colors"
                   >
-                    Choose a different file
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-3">
-                  <Upload className={`h-10 w-10 ${dragActive ? 'text-[#d4a017]' : 'text-[#555]'}`} />
-                  <p className="font-medium text-[#ccc]">Drag & drop your resume PDF here</p>
-                  <p className="text-sm text-[#666]">or click to browse files</p>
-                </div>
-              )}
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Upload Button */}
+            {/* Parse Button */}
             <Button
-              onClick={handleUpload}
-              disabled={!selectedFile || uploading}
+              onClick={handleParse}
+              disabled={!resumeText.trim() || parsing}
               size="lg"
               className="gap-2 min-w-[200px] bg-[#d4a017] hover:bg-[#b8860b] text-[#0a0a0a] font-semibold"
             >
-              {uploading ? (
+              {parsing ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  Parsing Resume...
+                  Structuring Resume...
                 </>
               ) : (
                 <>
-                  <Upload className="h-5 w-5" />
-                  Upload & Extract
+                  <Sparkles className="h-5 w-5" />
+                  Parse & Structure
                 </>
               )}
             </Button>
 
             <p className="text-xs text-[#555]">
-              Supports PDF resumes with selectable text
+              AI will automatically organize your resume into categories: personal info, summary, skills, experience, education, certifications & projects.
             </p>
           </div>
         </main>

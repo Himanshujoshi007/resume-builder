@@ -1,53 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractText } from 'unpdf';
 import ZAI from 'z-ai-web-dev-sdk';
 import type { ResumeData } from '@/lib/resume-types';
 
+/**
+ * Parse resume API — accepts EXTRACTED TEXT (not PDF file).
+ *
+ * The PDF is parsed client-side in the browser (see src/lib/pdf-extractor.ts),
+ * so this server route NEVER needs a PDF library. This is 100% Vercel-compatible.
+ */
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get('resume') as File | null;
+    const { text } = await request.json();
 
-    if (!file) {
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return NextResponse.json(
-        { error: 'No file uploaded' },
+        { error: 'No resume text provided' },
         { status: 400 }
       );
     }
 
-    // Validate file type
-    if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
-      return NextResponse.json(
-        { error: 'Only PDF files are supported' },
-        { status: 400 }
-      );
-    }
-
-    // Extract text from PDF using unpdf (built for serverless/edge)
-    const bytes = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(bytes);
-
-    let extractedText = '';
-
-    try {
-      const { text, totalPages } = await extractText(uint8Array);
-      // text is an array of page texts - join them
-      extractedText = Array.isArray(text) ? text.join('\n\n') : String(text);
-      console.log(`PDF parsed: ${totalPages} pages, ${extractedText.length} chars extracted`);
-    } catch (pdfError) {
-      console.error('PDF extraction error:', pdfError);
-      return NextResponse.json(
-        { error: 'Could not read the PDF file. Please ensure it is a valid PDF with selectable text.' },
-        { status: 400 }
-      );
-    }
-
-    if (!extractedText || extractedText.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Could not extract text from the PDF. Please ensure the PDF contains selectable text (not a scanned image).' },
-        { status: 400 }
-      );
-    }
+    const extractedText = text.trim();
 
     // Use AI to structure the extracted text into ResumeData
     const zai = await ZAI.create();
@@ -134,7 +106,7 @@ Rules:
   } catch (error) {
     console.error('Resume parsing error:', error);
     return NextResponse.json(
-      { error: 'Failed to parse resume. Please ensure the PDF is a valid resume with selectable text.' },
+      { error: 'Failed to parse resume. Please ensure the PDF contains selectable text.' },
       { status: 500 }
     );
   }
