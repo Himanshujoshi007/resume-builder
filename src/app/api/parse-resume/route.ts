@@ -1,63 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { ResumeData } from '@/lib/resume-types';
-
-// Disable the worker for Node.js/serverless environment
-GlobalWorkerOptions.workerSrc = '';
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get('resume') as File | null;
+    const { text } = await request.json();
 
-    if (!file) {
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return NextResponse.json(
-        { error: 'No file uploaded' },
-        { status: 400 }
-      );
-    }
-
-    // Validate file type
-    if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
-      return NextResponse.json(
-        { error: 'Only PDF files are supported' },
-        { status: 400 }
-      );
-    }
-
-    // Extract text from PDF using pdfjs-dist (works on Vercel serverless)
-    const bytes = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(bytes);
-
-    let extractedText = '';
-
-    try {
-      const pdfDoc = await getDocument({ data: uint8Array }).promise;
-      const numPages = pdfDoc.numPages;
-      const pageTexts: string[] = [];
-
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdfDoc.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str || '')
-          .join(' ');
-        pageTexts.push(pageText);
-      }
-
-      extractedText = pageTexts.join('\n\n');
-    } catch (pdfError) {
-      console.error('PDF parse error:', pdfError);
-      return NextResponse.json(
-        { error: 'Could not read the PDF file. Please ensure it is a valid PDF with selectable text.' },
-        { status: 400 }
-      );
-    }
-
-    if (!extractedText || extractedText.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Could not extract text from the PDF. Please ensure the PDF contains selectable text (not a scanned image).' },
+        { error: 'No resume text provided' },
         { status: 400 }
       );
     }
@@ -68,7 +19,7 @@ export async function POST(request: NextRequest) {
     const prompt = `You are a resume parsing expert. Parse the following resume text and convert it into a structured JSON format.
 
 RESUME TEXT:
-${extractedText}
+${text}
 
 Return the result as a valid JSON object with EXACTLY this structure:
 {
@@ -147,7 +98,7 @@ Rules:
   } catch (error) {
     console.error('Resume parsing error:', error);
     return NextResponse.json(
-      { error: 'Failed to parse resume. Please ensure the PDF is a valid resume with selectable text.' },
+      { error: 'Failed to parse resume. Please ensure the PDF contains selectable text.' },
       { status: 500 }
     );
   }

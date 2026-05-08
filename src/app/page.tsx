@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react';
 import { useResumeStore } from '@/lib/resume-store';
 import type { ResumeData } from '@/lib/resume-types';
+import { extractTextFromPDF } from '@/lib/pdf-extractor';
+import { generateResumePDF } from '@/lib/pdf-generator';
 import { PersonalInfoForm } from '@/components/resume/personal-info-form';
 import { SummaryForm } from '@/components/resume/summary-form';
 import { CertificationsForm } from '@/components/resume/certifications-form';
@@ -91,9 +93,26 @@ export default function Home() {
     if (!selectedFile) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('resume', selectedFile);
-      const response = await fetch('/api/parse-resume', { method: 'POST', body: formData });
+      // Step 1: Extract text from PDF in the browser (no server needed!)
+      let extractedText = '';
+      try {
+        extractedText = await extractTextFromPDF(selectedFile);
+      } catch (pdfErr) {
+        console.error('PDF extraction error:', pdfErr);
+        throw new Error('Could not read the PDF file. Please ensure it is a valid PDF with selectable text.');
+      }
+
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new Error('Could not extract text from the PDF. Please ensure it contains selectable text (not a scanned image).');
+      }
+
+      // Step 2: Send extracted text to API for AI structuring
+      const response = await fetch('/api/parse-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: extractedText }),
+      });
+
       if (!response.ok) {
         let errorMsg = 'Failed to parse resume';
         try {
@@ -109,6 +128,7 @@ export default function Home() {
         }
         throw new Error(errorMsg);
       }
+
       const data = await response.json();
       setResumeData(data.resumeData as ResumeData);
       setSelectedFile(null);
@@ -171,39 +191,11 @@ export default function Home() {
     }
   };
 
-  // ─── PDF Download ──────────────────────────────────────────
+  // ─── PDF Download (client-side, no server needed!) ──────────
   const handleDownloadPDF = async () => {
     setDownloading(true);
     try {
-      const response = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(resumeData),
-      });
-      if (!response.ok) {
-        let errorMsg = 'Failed to generate PDF';
-        try {
-          const contentType = response.headers.get('content-type') || '';
-          if (contentType.includes('application/json')) {
-            const errorData = await response.json();
-            errorMsg = errorData.error || errorMsg;
-          } else {
-            errorMsg = `Server error (${response.status}). Please try again.`;
-          }
-        } catch {
-          errorMsg = `Server error (${response.status}). Please try again.`;
-        }
-        throw new Error(errorMsg);
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${resumeData.personalInfo.fullName.replace(/\s+/g, '_')}_Resume.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      generateResumePDF(resumeData);
       toast({ title: 'PDF Downloaded', description: 'Your resume has been downloaded.' });
     } catch (error) {
       console.error('Download error:', error);
