@@ -4,16 +4,49 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Loader2, Shield, User, Info } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { FileText, Loader2, Shield, User } from 'lucide-react';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [adminSeeded, setAdminSeeded] = useState(false);
-  const router = useRouter();
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Check if already logged in on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user?.role === 'admin') {
+            window.location.href = '/admin';
+            return;
+          } else if (data.user?.role === 'client') {
+            window.location.href = '/';
+            return;
+          }
+        }
+      } catch {
+        // not logged in, show login form
+      } finally {
+        setCheckingSession(false);
+      }
+    };
+
+    // Auto-seed admin on first visit
+    const seedAdmin = async () => {
+      try {
+        await fetch('/api/auth/seed-admin', { method: 'POST' });
+      } catch {
+        // silent - admin might already exist
+      }
+    };
+
+    seedAdmin();
+    checkSession();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,14 +69,12 @@ export default function LoginPage() {
         return;
       }
 
-      // Small delay to ensure cookie is properly set before redirect
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Redirect based on role
+      // Use window.location.href for a FULL page reload
+      // This ensures the browser sends the auth cookie with the next request
       if (data.user.role === 'admin') {
-        router.push('/admin');
+        window.location.href = '/admin';
       } else {
-        router.push('/');
+        window.location.href = '/';
       }
     } catch {
       setError('Network error. Please try again.');
@@ -51,21 +82,14 @@ export default function LoginPage() {
     }
   };
 
-  // Auto-seed admin on first visit to ensure admin account exists
-  useEffect(() => {
-    const seedAdmin = async () => {
-      try {
-        const res = await fetch('/api/auth/seed-admin', { method: 'POST' });
-        const data = await res.json();
-        if (data.success) {
-          setAdminSeeded(true);
-        }
-      } catch {
-        // silent - admin might already exist
-      }
-    };
-    seedAdmin();
-  }, []);
+  // Show spinner while checking existing session
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -145,23 +169,8 @@ export default function LoginPage() {
             </form>
           </div>
 
-          {/* Admin Credentials Hint */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
-            <div className="flex items-center gap-2 text-amber-700 font-medium text-sm">
-              <Info className="h-4 w-4 shrink-0" />
-              Admin Credentials
-            </div>
-            <div className="text-xs text-amber-600 space-y-0.5">
-              <p>Username: <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono">admin</code></p>
-              <p>Password: <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono">Admin@2026</code></p>
-            </div>
-            {adminSeeded && (
-              <p className="text-xs text-emerald-600 font-medium">Admin account initialized successfully!</p>
-            )}
-          </div>
-
           {/* Footer */}
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-slate-500 mt-4">
             Access provided by your administrator. Contact support if you need credentials.
           </p>
         </div>

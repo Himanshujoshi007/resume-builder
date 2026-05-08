@@ -77,7 +77,8 @@ export default function Home() {
       try {
         const meRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
         if (!meRes.ok) {
-          router.replace('/login');
+          // Full page redirect to ensure cookie state is clean
+          window.location.href = '/login';
           return;
         }
         const meData = await meRes.json();
@@ -94,17 +95,17 @@ export default function Home() {
           }
         }
       } catch {
-        router.replace('/login');
+        window.location.href = '/login';
       } finally {
         setAuthLoading(false);
       }
     };
     checkAuth();
-  }, [router]);
+  }, []);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    router.replace('/login');
+    window.location.href = '/login';
   };
 
   // Loading screen while checking auth
@@ -422,7 +423,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             {userRole === 'admin' && (
-              <Button variant="ghost" size="sm" onClick={() => router.push('/admin')} className="gap-2 text-slate-600">
+              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/admin'} className="gap-2 text-slate-600">
                 <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Admin</span>
               </Button>

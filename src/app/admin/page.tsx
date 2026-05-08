@@ -46,8 +46,8 @@ export default function AdminPage() {
   const fetchClients = useCallback(async () => {
     try {
       const response = await fetch('/api/auth/list-clients', { credentials: 'same-origin' });
-      if (response.status === 403) {
-        router.replace('/login');
+      if (response.status === 403 || response.status === 401) {
+        window.location.href = '/login';
         return;
       }
       const data = await response.json();
@@ -59,24 +59,24 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     // Verify admin session
     fetch('/api/auth/me', { credentials: 'same-origin' }).then(res => {
       if (!res.ok) {
-        router.replace('/login');
+        window.location.href = '/login';
         return;
       }
       res.json().then(data => {
         if (data.user?.role !== 'admin') {
-          router.replace('/login');
+          window.location.href = '/login';
           return;
         }
       });
     });
     fetchClients();
-  }, [fetchClients, router]);
+  }, [fetchClients]);
 
   const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,7 +172,7 @@ export default function AdminPage() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    router.replace('/login');
+    window.location.href = '/login';
   };
 
   const activeClients = clients.filter(c => c.isActive && !c.isExpired).length;
@@ -188,7 +188,7 @@ export default function AdminPage() {
             <h1 className="text-lg font-bold">Admin Dashboard</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => router.push('/')} className="text-slate-300 hover:text-white gap-2">
+            <Button variant="ghost" size="sm" onClick={() => window.location.href = '/'} className="text-slate-300 hover:text-white gap-2">
               <FileText className="h-4 w-4" />
               Resume App
             </Button>
