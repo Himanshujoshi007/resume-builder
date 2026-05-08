@@ -34,17 +34,18 @@ function buildResumeHTML(data: ResumeData): string {
   .contact { font-size: 9pt; text-align: center; margin-bottom: 10px; color: #444; }
   .section-header { font-size: 11pt; font-weight: bold; text-transform: uppercase; border-bottom: 1.5px solid #000; padding-bottom: 2px; margin-top: 12px; margin-bottom: 6px; letter-spacing: 0.5px; }
   .summary { font-size: 10pt; margin-bottom: 4px; text-align: justify; }
-  .cert-item { font-size: 10pt; margin-left: 15px; margin-bottom: 2px; }
-  .cert-item::before { content: "• "; }
-  .skill-category { font-size: 10pt; margin-bottom: 4px; margin-left: 15px; }
+  .bullet-list { list-style: none; padding-left: 0; margin: 0; }
+  .bullet-item { font-size: 10pt; margin-bottom: 3px; padding-left: 14px; position: relative; text-align: justify; }
+  .bullet-item::before { content: ""; position: absolute; left: 0; top: 6px; width: 5px; height: 5px; background-color: #000; border-radius: 50%; }
+  .cert-item { font-size: 10pt; margin-bottom: 3px; padding-left: 14px; position: relative; }
+  .cert-item::before { content: ""; position: absolute; left: 0; top: 6px; width: 5px; height: 5px; background-color: #000; border-radius: 50%; }
+  .skill-category { font-size: 10pt; margin-bottom: 4px; padding-left: 14px; position: relative; }
   .skill-category .cat-name { font-weight: bold; }
-  .skill-category::before { content: "• "; }
+  .skill-category::before { content: ""; position: absolute; left: 0; top: 6px; width: 5px; height: 5px; background-color: #000; border-radius: 50%; }
   .exp-entry { margin-bottom: 10px; }
   .exp-header { display: flex; justify-content: space-between; align-items: baseline; }
   .exp-job { font-weight: bold; font-size: 10pt; }
   .exp-date { font-size: 9pt; color: #444; }
-  .exp-bullet { margin-left: 15px; font-size: 10pt; margin-bottom: 2px; text-align: justify; }
-  .exp-bullet::before { content: "• "; }
   .edu-entry { margin-bottom: 6px; }
   .edu-header { display: flex; justify-content: space-between; align-items: baseline; }
   .edu-degree { font-weight: bold; font-size: 10pt; }
@@ -52,8 +53,6 @@ function buildResumeHTML(data: ResumeData): string {
   .edu-school { font-size: 10pt; }
   .proj-entry { margin-bottom: 8px; }
   .proj-title { font-weight: bold; font-size: 10pt; font-style: italic; }
-  .proj-bullet { margin-left: 15px; font-size: 10pt; margin-bottom: 2px; text-align: justify; }
-  .proj-bullet::before { content: "• "; }
 </style>
 </head>
 <body>`;
@@ -102,7 +101,7 @@ function buildResumeHTML(data: ResumeData): string {
       html += `<div class="exp-entry">`;
       html += `<div class="exp-header"><span class="exp-job">${escapeHtml(exp.jobTitle)}${exp.company ? ', ' + escapeHtml(exp.company) : ''}</span><span class="exp-date">${escapeHtml(exp.startDate)}${exp.endDate ? ' – ' + escapeHtml(exp.endDate) : ''}${exp.location ? ' | ' + escapeHtml(exp.location) : ''}</span></div>`;
       exp.bullets.filter(b => b.trim()).forEach(bullet => {
-        html += `<div class="exp-bullet">${escapeHtml(bullet)}</div>`;
+        html += `<div class="bullet-item">${escapeHtml(bullet)}</div>`;
       });
       html += `</div>`;
     });
@@ -128,7 +127,7 @@ function buildResumeHTML(data: ResumeData): string {
       html += `<div class="proj-entry">`;
       html += `<div class="proj-title">${escapeHtml(proj.title)}</div>`;
       proj.bullets.filter(b => b.trim()).forEach(bullet => {
-        html += `<div class="proj-bullet">${escapeHtml(bullet)}</div>`;
+        html += `<div class="bullet-item">${escapeHtml(bullet)}</div>`;
       });
       html += `</div>`;
     });

@@ -168,8 +168,8 @@ export function ResumePreview() {
             Certifications
           </h2>
           {certifications.map((cert, i) => (
-            <p key={i} className="ml-4 mb-0.5" style={{ fontSize: '10pt' }}>
-              • {cert}
+            <p key={i} className="pl-3.5 mb-0.5 relative" style={{ fontSize: '10pt' }}>
+              <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-black rounded-full inline-block" />{cert}
             </p>
           ))}
         </div>
@@ -182,8 +182,8 @@ export function ResumePreview() {
             Technical Skills
           </h2>
           {skills.map((skill, i) => (
-            <p key={i} className="ml-4 mb-1" style={{ fontSize: '10pt' }}>
-              • <span className="font-bold">{skill.category}</span>{skill.skills ? `: ${skill.skills}` : ''}
+            <p key={i} className="pl-3.5 mb-1 relative" style={{ fontSize: '10pt' }}>
+              <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-black rounded-full inline-block" /><span className="font-bold">{skill.category}</span>{skill.skills ? `: ${skill.skills}` : ''}
             </p>
           ))}
         </div>
@@ -206,8 +206,8 @@ export function ResumePreview() {
                 </span>
               </div>
               {exp.bullets.map((bullet, j) => (
-                <p key={j} className="ml-4 mb-0.5 text-justify" style={{ fontSize: '10pt' }}>
-                  • {bullet}
+                <p key={j} className="pl-3.5 mb-0.5 text-justify relative" style={{ fontSize: '10pt' }}>
+                  <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-black rounded-full inline-block" />{bullet}
                 </p>
               ))}
             </div>
@@ -245,8 +245,8 @@ export function ResumePreview() {
             <div key={i} className="mb-2">
               <p className="font-bold italic" style={{ fontSize: '10pt' }}>{proj.title}</p>
               {proj.bullets.map((bullet, j) => (
-                <p key={j} className="ml-4 mb-0.5 text-justify" style={{ fontSize: '10pt' }}>
-                  • {bullet}
+                <p key={j} className="pl-3.5 mb-0.5 text-justify relative" style={{ fontSize: '10pt' }}>
+                  <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-black rounded-full inline-block" />{bullet}
                 </p>
               ))}
             </div>
