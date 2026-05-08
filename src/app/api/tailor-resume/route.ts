@@ -102,23 +102,53 @@ Scoring guide: barely matches = 20-40, decent = 50-70, great = 75-90.
 
 IMPORTANT: Return ONLY the JSON object, no markdown code fences, no explanation.`;
 
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: 'system', content: 'You are a professional resume writer. Always respond with valid JSON only. No markdown, no explanation.' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.7,
-    });
+    let completion;
+    try {
+      completion = await zai.chat.completions.create({
+        messages: [
+          { role: 'system', content: 'You are a professional resume writer. Always respond with valid JSON only. No markdown, no code fences, no explanation.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+      });
+    } catch (aiError: unknown) {
+      console.error('AI API call failed:', aiError);
+      const errMsg = aiError instanceof Error ? aiError.message : 'Unknown AI error';
+      return NextResponse.json(
+        { error: `AI service error: ${errMsg}. Please try again.` },
+        { status: 502 }
+      );
+    }
 
-    const responseText = completion.choices[0]?.message?.content || '';
-    const cleanedResponse = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const result = JSON.parse(cleanedResponse);
+    const rawResponse = completion.choices[0]?.message?.content || '';
+    const cleanedResponse = rawResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    let result;
+    try {
+      result = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Tailor JSON parse error. AI response:', cleanedResponse.substring(0, 500));
+      return NextResponse.json(
+        { error: 'AI returned invalid formatting. Please try again.' },
+        { status: 502 }
+      );
+    }
+
+    // Validate structure
+    if (!result.tailoredResume || !result.matchScore) {
+      console.error('Invalid tailor response structure');
+      return NextResponse.json(
+        { error: 'AI returned an incomplete response. Please try again.' },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json(result);
   } catch (error) {
     console.error('Tailor resume error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to tailor resume. Please try again.' },
+      { error: `Failed to tailor resume: ${message}. Please try again.` },
       { status: 500 }
     );
   }

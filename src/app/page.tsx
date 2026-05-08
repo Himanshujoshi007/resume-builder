@@ -65,6 +65,10 @@ export default function Home() {
       toast({ title: 'Empty Resume', description: 'Please paste your resume text first.', variant: 'destructive' });
       return;
     }
+    if (resumeText.trim().length < 20) {
+      toast({ title: 'Too Short', description: 'Please paste more of your resume content.', variant: 'destructive' });
+      return;
+    }
     setParsing(true);
     try {
       const response = await fetch('/api/parse-resume', {
@@ -73,14 +77,16 @@ export default function Home() {
         body: JSON.stringify({ text: resumeText.trim() }),
       });
 
+      // Safely extract error message from any response type
       if (!response.ok) {
-        let errorMsg = 'Failed to parse resume';
+        let errorMsg = 'Something went wrong. Please try again.';
         try {
-          const contentType = response.headers.get('content-type') || '';
-          if (contentType.includes('application/json')) {
-            const errorData = await response.json();
-            errorMsg = errorData.error || errorMsg;
-          } else {
+          const text = await response.text();
+          try {
+            const parsed = JSON.parse(text);
+            errorMsg = parsed.error || errorMsg;
+          } catch {
+            // Response was HTML or non-JSON (e.g. Vercel error page)
             errorMsg = `Server error (${response.status}). Please try again.`;
           }
         } catch {
@@ -90,13 +96,17 @@ export default function Home() {
       }
 
       const data = await response.json();
+      if (!data.resumeData) {
+        throw new Error('AI did not return a valid resume structure. Please try again.');
+      }
       setResumeData(data.resumeData as ResumeData);
       setResumeText('');
       setHasResume(true);
-      toast({ title: 'Resume Parsed', description: 'Your resume has been structured successfully. You can now edit and tailor it.' });
+      toast({ title: 'Resume Parsed!', description: 'Your resume has been structured successfully. You can now edit and tailor it.' });
     } catch (error) {
       console.error('Parse error:', error);
-      toast({ title: 'Parse Failed', description: error instanceof Error ? error.message : 'Failed to parse resume.', variant: 'destructive' });
+      const msg = error instanceof Error ? error.message : 'Failed to parse resume. Please try again.';
+      toast({ title: 'Could Not Parse', description: msg, variant: 'destructive' });
     } finally {
       setParsing(false);
     }
@@ -121,13 +131,13 @@ export default function Home() {
         }),
       });
       if (!response.ok) {
-        let errorMsg = 'Failed to tailor resume';
+        let errorMsg = 'Failed to tailor resume. Please try again.';
         try {
-          const contentType = response.headers.get('content-type') || '';
-          if (contentType.includes('application/json')) {
-            const errorData = await response.json();
-            errorMsg = errorData.error || errorMsg;
-          } else {
+          const text = await response.text();
+          try {
+            const parsed = JSON.parse(text);
+            errorMsg = parsed.error || errorMsg;
+          } catch {
             errorMsg = `Server error (${response.status}). Please try again.`;
           }
         } catch {
