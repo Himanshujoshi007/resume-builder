@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useResumeStore } from '@/lib/resume-store';
 import type { ResumeData } from '@/lib/resume-types';
 import { PersonalInfoForm } from '@/components/resume/personal-info-form';
@@ -35,12 +35,8 @@ import {
   ChevronUp,
   Send,
   Info,
-  Clock,
-  LogOut,
-  Shield,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const { resumeData, resetResume, setResumeData } = useResumeStore();
@@ -62,79 +58,7 @@ export default function Home() {
   // Flow state: false = upload screen, true = editor
   const [hasResume, setHasResume] = useState(false);
 
-  // Auth & subscription state
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
-  const [isExpired, setIsExpired] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-
   const { toast } = useToast();
-  const router = useRouter();
-
-  // Check auth and subscription on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const meRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
-        if (!meRes.ok) {
-          // Full page redirect to ensure cookie state is clean
-          window.location.href = '/login';
-          return;
-        }
-        const meData = await meRes.json();
-        setUserRole(meData.user.role);
-
-        if (meData.user.role === 'client') {
-          const subRes = await fetch('/api/auth/subscription', { credentials: 'same-origin' });
-          const subData = await subRes.json();
-          if (subData.isExpired || !subData.isActive) {
-            setIsExpired(true);
-            setDaysRemaining(0);
-          } else {
-            setDaysRemaining(subData.daysRemaining);
-          }
-        }
-      } catch {
-        window.location.href = '/login';
-      } finally {
-        setAuthLoading(false);
-      }
-    };
-    checkAuth();
-  }, []);
-
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    window.location.href = '/login';
-  };
-
-  // Loading screen while checking auth
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-      </div>
-    );
-  }
-
-  // Expired screen for clients
-  if (isExpired) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <div className="max-w-md text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-            <Clock className="h-8 w-8 text-red-500" />
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900">Subscription Expired</h2>
-          <p className="text-slate-500">Your 30-day access period has ended. Please contact the administrator to renew your subscription.</p>
-          <Button variant="outline" onClick={handleLogout} className="gap-2">
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   // ─── Upload handlers ───────────────────────────────────────
   const handleFileSelect = (file: File) => {
@@ -409,32 +333,11 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <FileText className="h-5 w-5 text-slate-700" />
             <h1 className="text-lg font-bold text-slate-800">Resume Builder</h1>
-            {/* Subscription countdown for clients */}
-            {userRole === 'client' && daysRemaining !== null && (
-              <div className={`hidden sm:flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
-                daysRemaining > 10 ? 'bg-emerald-50 text-emerald-700' :
-                daysRemaining > 5 ? 'bg-amber-50 text-amber-700' :
-                'bg-red-50 text-red-700'
-              }`}>
-                <Clock className="h-3 w-3" />
-                {daysRemaining} days left
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-2">
-            {userRole === 'admin' && (
-              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/admin'} className="gap-2 text-slate-600">
-                <Shield className="h-4 w-4" />
-                <span className="hidden sm:inline">Admin</span>
-              </Button>
-            )}
             <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2 text-slate-600">
               <RotateCcw className="h-4 w-4" />
               <span className="hidden sm:inline">New Resume</span>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 text-slate-600">
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Logout</span>
             </Button>
             <Button size="sm" onClick={handleDownloadPDF} disabled={downloading} className="gap-2">
               {downloading ? (
@@ -445,17 +348,6 @@ export default function Home() {
             </Button>
           </div>
         </div>
-        {/* Mobile subscription banner for clients */}
-        {userRole === 'client' && daysRemaining !== null && (
-          <div className={`sm:hidden px-4 py-1.5 text-center text-xs font-medium ${
-            daysRemaining > 10 ? 'bg-emerald-50 text-emerald-700' :
-            daysRemaining > 5 ? 'bg-amber-50 text-amber-700' :
-            'bg-red-50 text-red-700'
-          }`}>
-            <Clock className="h-3 w-3 inline mr-1" />
-            {daysRemaining} days remaining in your subscription
-          </div>
-        )}
       </header>
 
       {/* ─── AI Tailor Bar ────────────────────────────────────── */}
