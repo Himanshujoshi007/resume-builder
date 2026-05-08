@@ -95,8 +95,19 @@ export default function Home() {
       formData.append('resume', selectedFile);
       const response = await fetch('/api/parse-resume', { method: 'POST', body: formData });
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to parse resume');
+        let errorMsg = 'Failed to parse resume';
+        try {
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMsg = errorData.error || errorMsg;
+          } else {
+            errorMsg = `Server error (${response.status}). Please try again.`;
+          }
+        } catch {
+          errorMsg = `Server error (${response.status}). Please try again.`;
+        }
+        throw new Error(errorMsg);
       }
       const data = await response.json();
       setResumeData(data.resumeData as ResumeData);
@@ -129,7 +140,21 @@ export default function Home() {
           additionalInstructions: personalInstructions.trim(),
         }),
       });
-      if (!response.ok) throw new Error('Failed to tailor resume');
+      if (!response.ok) {
+        let errorMsg = 'Failed to tailor resume';
+        try {
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMsg = errorData.error || errorMsg;
+          } else {
+            errorMsg = `Server error (${response.status}). Please try again.`;
+          }
+        } catch {
+          errorMsg = `Server error (${response.status}). Please try again.`;
+        }
+        throw new Error(errorMsg);
+      }
       const data = await response.json();
       if (data.tailoredResume) {
         setResumeData(data.tailoredResume as ResumeData);
@@ -155,7 +180,21 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(resumeData),
       });
-      if (!response.ok) throw new Error('Failed to generate PDF');
+      if (!response.ok) {
+        let errorMsg = 'Failed to generate PDF';
+        try {
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMsg = errorData.error || errorMsg;
+          } else {
+            errorMsg = `Server error (${response.status}). Please try again.`;
+          }
+        } catch {
+          errorMsg = `Server error (${response.status}). Please try again.`;
+        }
+        throw new Error(errorMsg);
+      }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

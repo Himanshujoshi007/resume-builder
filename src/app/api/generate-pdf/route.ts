@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import PDFDocument from 'pdfkit';
+import { jsPDF } from 'jspdf';
 import type { ResumeData } from '@/lib/resume-types';
 
 function safeStr(val: unknown): string {
@@ -15,32 +15,18 @@ export async function POST(request: NextRequest) {
     const data: ResumeData = await request.json();
     const { personalInfo, summary, certifications, skills, experience, education, projects } = data;
 
-    // Create PDF document
-    const doc = new PDFDocument({
-      size: 'A4',
-      margins: { top: 50, bottom: 50, left: 55, right: 55 },
-      info: {
-        Title: `${personalInfo.fullName || 'Resume'}_Resume`,
-        Author: personalInfo.fullName || 'Resume Builder',
-      },
-    });
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const marginLeft = 55;
+    const marginRight = 55;
+    const contentWidth = pageWidth - marginLeft - marginRight;
+    let y = 50;
 
-    // Collect PDF chunks
-    const chunks: Buffer[] = [];
-    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-
-    // Get the promise for the final buffer
-    const pdfPromise = new Promise<Buffer>((resolve, reject) => {
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
-    });
-
-    // ─── Helper functions ───────────────────────────────────────
-    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-
-    function checkPageBreak(needed: number = 40): boolean {
-      if (doc.y + needed > doc.page.height - doc.page.margins.bottom) {
+    function checkPageBreak(needed: number = 30): boolean {
+      if (y + needed > pageHeight - 50) {
         doc.addPage();
+        y = 50;
         return true;
       }
       return false;
@@ -48,70 +34,55 @@ export async function POST(request: NextRequest) {
 
     function drawSectionHeader(title: string): void {
       checkPageBreak(30);
-      doc.moveDown(0.6);
-      // Gold accent line + header
-      doc.save();
-      doc.moveTo(doc.page.margins.left, doc.y)
-        .lineTo(doc.page.margins.left + pageWidth, doc.y)
-        .strokeColor('#000000')
-        .lineWidth(1.2)
-        .stroke();
-      doc.restore();
-      doc.moveDown(0.3);
-      doc.font('Helvetica-Bold')
-        .fontSize(11)
-        .fillColor('#000000')
-        .text(title.toUpperCase(), doc.page.margins.left, doc.y, {
-          width: pageWidth,
-          align: 'left',
-          characterSpacing: 0.5,
-        });
-      doc.moveDown(0.3);
+      y += 8;
+      // Draw a thin line
+      doc.setDrawColor(0);
+      doc.setLineWidth(1);
+      doc.line(marginLeft, y, pageWidth - marginRight, y);
+      y += 8;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text(title.toUpperCase(), marginLeft, y);
+      y += 6;
     }
 
     function drawBullet(text: string): void {
-      checkPageBreak(20);
-      const bulletX = doc.page.margins.left + 8;
-      const textX = doc.page.margins.left + 18;
-      const textWidth = pageWidth - 18;
+      checkPageBreak(18);
+      const bulletX = marginLeft + 8;
+      const textX = marginLeft + 18;
+      const maxTextWidth = contentWidth - 18;
 
       // Draw filled circle bullet
-      doc.save();
-      doc.circle(bulletX, doc.y + 5, 2.5)
-        .fillColor('#000000')
-        .fill();
-      doc.restore();
+      doc.setFillColor(0, 0, 0);
+      doc.circle(bulletX, y - 2, 2.5, 'F');
 
-      doc.font('Helvetica')
-        .fontSize(10)
-        .fillColor('#333333')
-        .text(text, textX, doc.y, {
-          width: textWidth,
-          align: 'justify',
-          lineGap: 2,
-        });
-      doc.moveDown(0.15);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(51, 51, 51);
+
+      const lines = doc.splitTextToSize(text, maxTextWidth);
+      doc.text(lines, textX, y);
+      y += lines.length * 13;
     }
 
     // ─── Name ────────────────────────────────────────────────
-    doc.font('Helvetica-Bold')
-      .fontSize(20)
-      .fillColor('#000000')
-      .text(personalInfo.fullName || 'Your Name', doc.page.margins.left, doc.y, {
-        width: pageWidth,
-        align: 'center',
-      });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(0, 0, 0);
+    const nameText = personalInfo.fullName || 'Your Name';
+    const nameWidth = doc.getTextWidth(nameText);
+    doc.text(nameText, (pageWidth - nameWidth) / 2, y);
+    y += 24;
 
     // ─── Job Title ───────────────────────────────────────────
     if (personalInfo.jobTitle) {
-      doc.moveDown(0.1);
-      doc.font('Helvetica')
-        .fontSize(12)
-        .fillColor('#333333')
-        .text(personalInfo.jobTitle, doc.page.margins.left, doc.y, {
-          width: pageWidth,
-          align: 'center',
-        });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      doc.setTextColor(51, 51, 51);
+      const titleWidth = doc.getTextWidth(personalInfo.jobTitle);
+      doc.text(personalInfo.jobTitle, (pageWidth - titleWidth) / 2, y);
+      y += 16;
     }
 
     // ─── Contact Info ────────────────────────────────────────
@@ -123,28 +94,25 @@ export async function POST(request: NextRequest) {
     ].filter(s => s && s.trim());
 
     if (contactParts.length > 0) {
-      doc.moveDown(0.2);
-      doc.font('Helvetica')
-        .fontSize(9)
-        .fillColor('#444444')
-        .text(contactParts.join('  |  '), doc.page.margins.left, doc.y, {
-          width: pageWidth,
-          align: 'center',
-        });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(68, 68, 68);
+      const contactText = contactParts.join('  |  ');
+      const contactWidth = doc.getTextWidth(contactText);
+      doc.text(contactText, (pageWidth - contactWidth) / 2, y);
+      y += 14;
     }
 
     // ─── Summary ─────────────────────────────────────────────
     const summaryText = safeStr(summary);
     if (summaryText.trim()) {
       drawSectionHeader('Summary');
-      doc.font('Helvetica')
-        .fontSize(10)
-        .fillColor('#333333')
-        .text(summaryText, doc.page.margins.left, doc.y, {
-          width: pageWidth,
-          align: 'justify',
-          lineGap: 2,
-        });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(51, 51, 51);
+      const summaryLines = doc.splitTextToSize(summaryText, contentWidth);
+      doc.text(summaryLines, marginLeft, y);
+      y += summaryLines.length * 13;
     }
 
     // ─── Certifications ──────────────────────────────────────
@@ -160,26 +128,31 @@ export async function POST(request: NextRequest) {
       drawSectionHeader('Technical Skills');
       skillArray.forEach((skill: { category: string; skills: string }) => {
         checkPageBreak(16);
-        const label = skill.category ? `${skill.category}: ` : '';
-        const textX = doc.page.margins.left + 18;
-        const textWidth = pageWidth - 18;
+        const bulletX = marginLeft + 8;
+        const textX = marginLeft + 18;
+        const maxTextWidth = contentWidth - 18;
 
         // Draw bullet
-        doc.save();
-        doc.circle(doc.page.margins.left + 8, doc.y + 5, 2.5)
-          .fillColor('#000000')
-          .fill();
-        doc.restore();
+        doc.setFillColor(0, 0, 0);
+        doc.circle(bulletX, y - 2, 2.5, 'F');
 
-        // Bold category, normal skills
-        doc.font('Helvetica-Bold')
-          .fontSize(10)
-          .fillColor('#000000')
-          .text(label, textX, doc.y, { continued: true, width: textWidth, lineGap: 2 });
-        doc.font('Helvetica')
-          .fillColor('#333333')
-          .text(skill.skills || '', { width: textWidth, lineGap: 2 });
-        doc.moveDown(0.15);
+        const label = skill.category ? `${skill.category}: ` : '';
+        const skillText = skill.skills || '';
+
+        // Bold category label
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        const labelWidth = doc.getTextWidth(label);
+        doc.text(label, textX, y);
+
+        // Normal skills text
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        const remainingWidth = maxTextWidth - labelWidth;
+        const skillLines = doc.splitTextToSize(skillText, remainingWidth);
+        doc.text(skillLines, textX + labelWidth, y);
+        y += skillLines.length * 13;
       });
     }
 
@@ -190,34 +163,26 @@ export async function POST(request: NextRequest) {
       expArray.forEach((exp: { jobTitle: string; company: string; startDate: string; endDate: string; location: string; bullets: string[] }) => {
         checkPageBreak(30);
 
-        // Job title + Company (left) | Date + Location (right)
+        // Job title + Company (left aligned)
         const leftText = `${exp.jobTitle || ''}${exp.company ? ', ' + exp.company : ''}`;
-        const rightText = `${exp.startDate || ''}${exp.endDate ? ' – ' + exp.endDate : ''}${exp.location ? ' | ' + exp.location : ''}`;
+        const rightText = `${exp.startDate || ''}${exp.endDate ? ' \u2013 ' + exp.endDate : ''}${exp.location ? ' | ' + exp.location : ''}`;
 
-        const yStart = doc.y;
-        doc.font('Helvetica-Bold')
-          .fontSize(10)
-          .fillColor('#000000')
-          .text(leftText, doc.page.margins.left, yStart, {
-            width: pageWidth * 0.65,
-            lineGap: 2,
-          });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(leftText, marginLeft, y);
 
-        doc.font('Helvetica')
-          .fontSize(9)
-          .fillColor('#444444')
-          .text(rightText, doc.page.margins.left + pageWidth * 0.65, yStart, {
-            width: pageWidth * 0.35,
-            align: 'right',
-            lineGap: 2,
-          });
-
-        doc.y = Math.max(doc.y, yStart + 14);
-        doc.moveDown(0.1);
+        // Date + Location (right aligned)
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(68, 68, 68);
+        const rightWidth = doc.getTextWidth(rightText);
+        doc.text(rightText, pageWidth - marginRight - rightWidth, y);
+        y += 14;
 
         // Bullets
         (exp.bullets || []).filter((b: string) => b.trim()).forEach((bullet: string) => drawBullet(bullet));
-        doc.moveDown(0.3);
+        y += 6;
       });
     }
 
@@ -228,40 +193,30 @@ export async function POST(request: NextRequest) {
       eduArray.forEach((edu: { degree: string; startDate: string; endDate: string; school: string; location: string }) => {
         checkPageBreak(25);
 
-        const yStart = doc.y;
         const leftText = edu.degree || '';
-        const rightText = `${edu.startDate || ''}${edu.endDate ? ' – ' + edu.endDate : ''}`;
+        const rightText = `${edu.startDate || ''}${edu.endDate ? ' \u2013 ' + edu.endDate : ''}`;
 
-        doc.font('Helvetica-Bold')
-          .fontSize(10)
-          .fillColor('#000000')
-          .text(leftText, doc.page.margins.left, yStart, {
-            width: pageWidth * 0.7,
-            lineGap: 2,
-          });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(leftText, marginLeft, y);
 
-        doc.font('Helvetica')
-          .fontSize(9)
-          .fillColor('#444444')
-          .text(rightText, doc.page.margins.left + pageWidth * 0.7, yStart, {
-            width: pageWidth * 0.3,
-            align: 'right',
-            lineGap: 2,
-          });
-
-        doc.y = Math.max(doc.y, yStart + 14);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(68, 68, 68);
+        const rightWidth = doc.getTextWidth(rightText);
+        doc.text(rightText, pageWidth - marginRight - rightWidth, y);
+        y += 14;
 
         const schoolText = `${edu.school || ''}${edu.location ? ', ' + edu.location : ''}`;
         if (schoolText) {
-          doc.font('Helvetica')
-            .fontSize(10)
-            .fillColor('#333333')
-            .text(schoolText, doc.page.margins.left, doc.y, {
-              width: pageWidth,
-              lineGap: 2,
-            });
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          doc.setTextColor(51, 51, 51);
+          doc.text(schoolText, marginLeft, y);
+          y += 14;
         }
-        doc.moveDown(0.3);
+        y += 6;
       });
     }
 
@@ -272,25 +227,19 @@ export async function POST(request: NextRequest) {
       projArray.forEach((proj: { title: string; bullets: string[] }) => {
         checkPageBreak(25);
 
-        doc.font('Helvetica-BoldOblique')
-          .fontSize(10)
-          .fillColor('#000000')
-          .text(proj.title, doc.page.margins.left, doc.y, {
-            width: pageWidth,
-            lineGap: 2,
-          });
-        doc.moveDown(0.1);
+        doc.setFont('helvetica', 'bolditalic');
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(proj.title, marginLeft, y);
+        y += 14;
 
         (proj.bullets || []).filter((b: string) => b.trim()).forEach((bullet: string) => drawBullet(bullet));
-        doc.moveDown(0.3);
+        y += 6;
       });
     }
 
-    // Finalize PDF
-    doc.end();
-
-    // Wait for the buffer
-    const pdfBuffer = await pdfPromise;
+    // Get the PDF as a buffer
+    const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
 
     return new NextResponse(pdfBuffer, {
       headers: {

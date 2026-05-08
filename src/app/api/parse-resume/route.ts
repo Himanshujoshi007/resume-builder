@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
-import * as pdfParse from 'pdf-parse';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { ResumeData } from '@/lib/resume-types';
+
+// Disable the worker for Node.js/serverless environment
+GlobalWorkerOptions.workerSrc = '';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,15 +26,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract text from PDF using pdf-parse (pure Node.js, no Python needed)
+    // Extract text from PDF using pdfjs-dist (works on Vercel serverless)
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const uint8Array = new Uint8Array(bytes);
 
     let extractedText = '';
 
     try {
-      const pdfData = await pdfParse(buffer);
-      extractedText = pdfData.text || '';
+      const pdfDoc = await getDocument({ data: uint8Array }).promise;
+      const numPages = pdfDoc.numPages;
+      const pageTexts: string[] = [];
+
+      for (let i = 1; i <= numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str || '')
+          .join(' ');
+        pageTexts.push(pageText);
+      }
+
+      extractedText = pageTexts.join('\n\n');
     } catch (pdfError) {
       console.error('PDF parse error:', pdfError);
       return NextResponse.json(
