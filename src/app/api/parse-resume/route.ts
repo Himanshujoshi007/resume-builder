@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
-import { execSync } from 'child_process';
-import { writeFileSync, unlinkSync } from 'fs';
-import { join } from 'path';
+import * as pdfParse from 'pdf-parse';
 import type { ResumeData } from '@/lib/resume-types';
 
 export async function POST(request: NextRequest) {
@@ -25,56 +23,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save the uploaded file temporarily
+    // Extract text from PDF using pdf-parse (pure Node.js, no Python needed)
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const tempPath = join('/tmp', `resume_upload_${Date.now()}.pdf`);
-    writeFileSync(tempPath, buffer);
 
     let extractedText = '';
 
     try {
-      // Extract text using pdfplumber via Python
-      const pythonScript = `
-import pdfplumber
-import json
-import sys
-
-try:
-    text_parts = []
-    with pdfplumber.open(sys.argv[1]) as pdf:
-        for page in pdf.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text_parts.append(page_text)
-    print(json.dumps({"text": "\\n".join(text_parts)}))
-except Exception as e:
-    print(json.dumps({"error": str(e)}))
-`;
-      const scriptPath = join('/tmp', `extract_${Date.now()}.py`);
-      writeFileSync(scriptPath, pythonScript);
-
-      const result = execSync(`python3 "${scriptPath}" "${tempPath}"`, {
-        encoding: 'utf-8',
-        timeout: 30000,
-      });
-
-      const parsed = JSON.parse(result.trim());
-      if (parsed.error) {
-        throw new Error(parsed.error);
-      }
-      extractedText = parsed.text;
-
-      // Clean up script
-      try { unlinkSync(scriptPath); } catch {}
-    } finally {
-      // Clean up temp PDF
-      try { unlinkSync(tempPath); } catch {}
+      const pdfData = await pdfParse(buffer);
+      extractedText = pdfData.text || '';
+    } catch (pdfError) {
+      console.error('PDF parse error:', pdfError);
+      return NextResponse.json(
+        { error: 'Could not read the PDF file. Please ensure it is a valid PDF with selectable text.' },
+        { status: 400 }
+      );
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
       return NextResponse.json(
-        { error: 'Could not extract text from the PDF. Please ensure the PDF contains selectable text.' },
+        { error: 'Could not extract text from the PDF. Please ensure the PDF contains selectable text (not a scanned image).' },
         { status: 400 }
       );
     }
