@@ -45,9 +45,9 @@ export default function AdminPage() {
 
   const fetchClients = useCallback(async () => {
     try {
-      const response = await fetch('/api/auth/list-clients');
+      const response = await fetch('/api/auth/list-clients', { credentials: 'same-origin' });
       if (response.status === 403) {
-        router.push('/login');
+        router.replace('/login');
         return;
       }
       const data = await response.json();
@@ -63,14 +63,14 @@ export default function AdminPage() {
 
   useEffect(() => {
     // Verify admin session
-    fetch('/api/auth/me').then(res => {
+    fetch('/api/auth/me', { credentials: 'same-origin' }).then(res => {
       if (!res.ok) {
-        router.push('/login');
+        router.replace('/login');
         return;
       }
       res.json().then(data => {
         if (data.user?.role !== 'admin') {
-          router.push('/login');
+          router.replace('/login');
           return;
         }
       });
@@ -89,6 +89,7 @@ export default function AdminPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: newUsername, password: newPassword }),
+        credentials: 'same-origin',
       });
 
       const data = await response.json();
@@ -120,6 +121,7 @@ export default function AdminPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId }),
+        credentials: 'same-origin',
       });
 
       const data = await response.json();
@@ -139,9 +141,38 @@ export default function AdminPage() {
     }
   };
 
+  const handleDelete = async (clientId: string, clientUsername: string) => {
+    if (!confirm(`Are you sure you want to delete client "${clientUsername}"? This action cannot be undone.`)) {
+      return;
+    }
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('/api/auth/delete-client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId }),
+        credentials: 'same-origin',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to delete client');
+        return;
+      }
+
+      setSuccess(`Client "${clientUsername}" deleted successfully!`);
+      fetchClients();
+    } catch {
+      setError('Network error. Please try again.');
+    }
+  };
+
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    router.replace('/login');
   };
 
   const activeClients = clients.filter(c => c.isActive && !c.isExpired).length;
@@ -349,7 +380,7 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* Right: Toggle */}
+                    {/* Right: Toggle + Delete */}
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleToggle(client.id)}
@@ -367,6 +398,13 @@ export default function AdminPage() {
                       <span className={`text-xs font-medium ${isCurrentlyActive ? 'text-emerald-600' : 'text-slate-400'}`}>
                         {isCurrentlyActive ? 'ON' : 'OFF'}
                       </span>
+                      <button
+                        onClick={() => handleDelete(client.id, client.username)}
+                        className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Delete client"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 </div>

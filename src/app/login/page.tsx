@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Loader2, Shield, User } from 'lucide-react';
+import { FileText, Loader2, Shield, User, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [adminSeeded, setAdminSeeded] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -24,14 +25,19 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
+        credentials: 'same-origin',
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         setError(data.error || 'Login failed');
+        setLoading(false);
         return;
       }
+
+      // Small delay to ensure cookie is properly set before redirect
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Redirect based on role
       if (data.user.role === 'admin') {
@@ -41,20 +47,25 @@ export default function LoginPage() {
       }
     } catch {
       setError('Network error. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
 
-  // Seed admin on first visit
-  const handleSeedAdmin = async () => {
-    try {
-      await fetch('/api/auth/seed-admin', { method: 'POST' });
-      setError('');
-    } catch {
-      // silent
-    }
-  };
+  // Auto-seed admin on first visit to ensure admin account exists
+  useEffect(() => {
+    const seedAdmin = async () => {
+      try {
+        const res = await fetch('/api/auth/seed-admin', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          setAdminSeeded(true);
+        }
+      } catch {
+        // silent - admin might already exist
+      }
+    };
+    seedAdmin();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -134,8 +145,23 @@ export default function LoginPage() {
             </form>
           </div>
 
+          {/* Admin Credentials Hint */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
+            <div className="flex items-center gap-2 text-amber-700 font-medium text-sm">
+              <Info className="h-4 w-4 shrink-0" />
+              Admin Credentials
+            </div>
+            <div className="text-xs text-amber-600 space-y-0.5">
+              <p>Username: <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono">admin</code></p>
+              <p>Password: <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono">Admin@2026</code></p>
+            </div>
+            {adminSeeded && (
+              <p className="text-xs text-emerald-600 font-medium">Admin account initialized successfully!</p>
+            )}
+          </div>
+
           {/* Footer */}
-          <p className="text-center text-xs text-slate-500 mt-6">
+          <p className="text-center text-xs text-slate-500">
             Access provided by your administrator. Contact support if you need credentials.
           </p>
         </div>

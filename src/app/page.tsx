@@ -75,16 +75,16 @@ export default function Home() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const meRes = await fetch('/api/auth/me');
+        const meRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
         if (!meRes.ok) {
-          router.push('/login');
+          router.replace('/login');
           return;
         }
         const meData = await meRes.json();
         setUserRole(meData.user.role);
 
         if (meData.user.role === 'client') {
-          const subRes = await fetch('/api/auth/subscription');
+          const subRes = await fetch('/api/auth/subscription', { credentials: 'same-origin' });
           const subData = await subRes.json();
           if (subData.isExpired || !subData.isActive) {
             setIsExpired(true);
@@ -94,7 +94,7 @@ export default function Home() {
           }
         }
       } catch {
-        router.push('/login');
+        router.replace('/login');
       } finally {
         setAuthLoading(false);
       }
@@ -103,8 +103,8 @@ export default function Home() {
   }, [router]);
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    router.replace('/login');
   };
 
   // Loading screen while checking auth
