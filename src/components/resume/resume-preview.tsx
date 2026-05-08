@@ -19,13 +19,11 @@ function safeStringArray(arr: unknown): string[] {
     .map(item => {
       if (typeof item === 'string') return item;
       if (typeof item === 'object' && item !== null) {
-        // If AI returned an object instead of a string, try to extract the name
         const obj = item as Record<string, unknown>;
         if (typeof obj.name === 'string' && obj.name.trim()) return obj.name;
         if (typeof obj.certification === 'string' && obj.certification.trim()) return obj.certification;
         if (typeof obj.title === 'string' && obj.title.trim()) return obj.title;
         if (typeof obj.value === 'string' && obj.value.trim()) return obj.value;
-        // Fallback: concatenate all string values
         const strVals = Object.values(obj).filter((v): v is string => typeof v === 'string' && v.trim());
         if (strVals.length > 0) return strVals.join(' - ');
         return JSON.stringify(item);
@@ -41,7 +39,6 @@ function safeSkills(arr: unknown): { category: string; skills: string }[] {
   return arr
     .map(item => {
       if (typeof item === 'string') {
-        // If AI returned a plain string, make it a category
         return { category: item, skills: '' };
       }
       if (typeof item === 'object' && item !== null) {
@@ -133,20 +130,20 @@ export function ResumePreview() {
   ].filter(s => s && s.trim());
 
   return (
-    <div className="bg-white text-black p-8 sm:p-10 shadow-lg rounded-sm" style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '10pt', lineHeight: '1.4' }}>
+    <div className="bg-[#0d0d0d] text-[#e8e8e8] p-8 sm:p-10 shadow-lg shadow-black/40 rounded-sm border border-[#2a2a2a]" style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '10pt', lineHeight: '1.4' }}>
       {/* Name */}
-      <h1 className="text-center text-2xl sm:text-3xl font-bold mb-1" style={{ fontSize: '20pt' }}>
+      <h1 className="text-center text-2xl sm:text-3xl font-bold mb-1 text-[#d4a017]" style={{ fontSize: '20pt' }}>
         {personalInfo.fullName || 'Your Name'}
       </h1>
 
       {/* Job Title */}
-      <p className="text-center text-base sm:text-lg text-gray-600 mb-1" style={{ fontSize: '12pt', color: '#333' }}>
+      <p className="text-center text-base sm:text-lg mb-1" style={{ fontSize: '12pt', color: '#b8860b' }}>
         {personalInfo.jobTitle || 'Job Title'}
       </p>
 
       {/* Contact Info */}
       {contactParts.length > 0 && (
-        <p className="text-center text-xs sm:text-sm text-gray-500 mb-3" style={{ fontSize: '9pt', color: '#444' }}>
+        <p className="text-center text-xs sm:text-sm mb-3" style={{ fontSize: '9pt', color: '#888' }}>
           {contactParts.join(' | ')}
         </p>
       )}
@@ -154,22 +151,22 @@ export function ResumePreview() {
       {/* Summary */}
       {summary.trim() && (
         <div className="mb-1">
-          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
+          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-[#d4a017] pb-0.5 mb-1.5 text-[#d4a017]" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Summary
           </h2>
-          <p className="text-justify" style={{ fontSize: '10pt' }}>{summary}</p>
+          <p className="text-justify text-[#ccc]" style={{ fontSize: '10pt' }}>{summary}</p>
         </div>
       )}
 
       {/* Certifications */}
       {certifications.length > 0 && (
         <div className="mb-1">
-          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
+          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-[#d4a017] pb-0.5 mb-1.5 mt-3 text-[#d4a017]" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Certifications
           </h2>
           {certifications.map((cert, i) => (
-            <p key={i} className="pl-3.5 mb-0.5 relative" style={{ fontSize: '10pt' }}>
-              <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-black rounded-full inline-block" />{cert}
+            <p key={i} className="pl-3.5 mb-0.5 relative text-[#ccc]" style={{ fontSize: '10pt' }}>
+              <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-[#d4a017] rounded-full inline-block" />{cert}
             </p>
           ))}
         </div>
@@ -178,12 +175,12 @@ export function ResumePreview() {
       {/* Technical Skills */}
       {skills.length > 0 && (
         <div className="mb-1">
-          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
+          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-[#d4a017] pb-0.5 mb-1.5 mt-3 text-[#d4a017]" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Technical Skills
           </h2>
           {skills.map((skill, i) => (
-            <p key={i} className="pl-3.5 mb-1 relative" style={{ fontSize: '10pt' }}>
-              <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-black rounded-full inline-block" /><span className="font-bold">{skill.category}</span>{skill.skills ? `: ${skill.skills}` : ''}
+            <p key={i} className="pl-3.5 mb-1 relative text-[#ccc]" style={{ fontSize: '10pt' }}>
+              <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-[#d4a017] rounded-full inline-block" /><span className="font-bold text-[#e8e8e8]">{skill.category}</span>{skill.skills ? `: ${skill.skills}` : ''}
             </p>
           ))}
         </div>
@@ -192,22 +189,22 @@ export function ResumePreview() {
       {/* Professional Experience */}
       {experience.length > 0 && (
         <div className="mb-1">
-          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
+          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-[#d4a017] pb-0.5 mb-1.5 mt-3 text-[#d4a017]" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Professional Experience
           </h2>
           {experience.map((exp, i) => (
             <div key={i} className="mb-3">
               <div className="flex justify-between items-baseline">
-                <span className="font-bold" style={{ fontSize: '10pt' }}>
+                <span className="font-bold text-[#e8e8e8]" style={{ fontSize: '10pt' }}>
                   {exp.jobTitle}{exp.company ? `, ${exp.company}` : ''}
                 </span>
-                <span className="text-gray-500" style={{ fontSize: '9pt', color: '#444' }}>
+                <span style={{ fontSize: '9pt', color: '#888' }}>
                   {exp.startDate}{exp.endDate ? ` – ${exp.endDate}` : ''}{exp.location ? ` | ${exp.location}` : ''}
                 </span>
               </div>
               {exp.bullets.map((bullet, j) => (
-                <p key={j} className="pl-3.5 mb-0.5 text-justify relative" style={{ fontSize: '10pt' }}>
-                  <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-black rounded-full inline-block" />{bullet}
+                <p key={j} className="pl-3.5 mb-0.5 text-justify relative text-[#ccc]" style={{ fontSize: '10pt' }}>
+                  <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-[#d4a017] rounded-full inline-block" />{bullet}
                 </p>
               ))}
             </div>
@@ -218,18 +215,18 @@ export function ResumePreview() {
       {/* Education */}
       {education.length > 0 && (
         <div className="mb-1">
-          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
+          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-[#d4a017] pb-0.5 mb-1.5 mt-3 text-[#d4a017]" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Education
           </h2>
           {education.map((edu, i) => (
             <div key={i} className="mb-2">
               <div className="flex justify-between items-baseline">
-                <span className="font-bold" style={{ fontSize: '10pt' }}>{edu.degree}</span>
-                <span className="text-gray-500" style={{ fontSize: '9pt', color: '#444' }}>
+                <span className="font-bold text-[#e8e8e8]" style={{ fontSize: '10pt' }}>{edu.degree}</span>
+                <span style={{ fontSize: '9pt', color: '#888' }}>
                   {edu.startDate}{edu.endDate ? ` – ${edu.endDate}` : ''}
                 </span>
               </div>
-              <p style={{ fontSize: '10pt' }}>{edu.school}{edu.location ? `, ${edu.location}` : ''}</p>
+              <p className="text-[#ccc]" style={{ fontSize: '10pt' }}>{edu.school}{edu.location ? `, ${edu.location}` : ''}</p>
             </div>
           ))}
         </div>
@@ -238,15 +235,15 @@ export function ResumePreview() {
       {/* Projects */}
       {projects.length > 0 && (
         <div className="mb-1">
-          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-black pb-0.5 mb-1.5 mt-3" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
+          <h2 className="text-xs font-bold uppercase tracking-wide border-b border-[#d4a017] pb-0.5 mb-1.5 mt-3 text-[#d4a017]" style={{ fontSize: '11pt', letterSpacing: '0.5px' }}>
             Projects
           </h2>
           {projects.map((proj, i) => (
             <div key={i} className="mb-2">
-              <p className="font-bold italic" style={{ fontSize: '10pt' }}>{proj.title}</p>
+              <p className="font-bold italic text-[#e8e8e8]" style={{ fontSize: '10pt' }}>{proj.title}</p>
               {proj.bullets.map((bullet, j) => (
-                <p key={j} className="pl-3.5 mb-0.5 text-justify relative" style={{ fontSize: '10pt' }}>
-                  <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-black rounded-full inline-block" />{bullet}
+                <p key={j} className="pl-3.5 mb-0.5 text-justify relative text-[#ccc]" style={{ fontSize: '10pt' }}>
+                  <span className="absolute left-0 top-[7px] w-[5px] h-[5px] bg-[#d4a017] rounded-full inline-block" />{bullet}
                 </p>
               ))}
             </div>

@@ -186,24 +186,24 @@ export default function Home() {
   // ─── UPLOAD SCREEN ─────────────────────────────────────────
   if (!hasResume) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">
-        <header className="border-b bg-white/80 backdrop-blur-sm">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0a0a] via-[#111] to-[#0a0a0a]">
+        <header className="border-b border-[#2a2a2a] bg-[#0a0a0a]/80 backdrop-blur-sm">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-2">
-            <FileText className="h-6 w-6 text-slate-700" />
-            <h1 className="text-xl font-bold text-slate-800">Resume Builder</h1>
+            <FileText className="h-6 w-6 text-[#d4a017]" />
+            <h1 className="text-xl font-bold text-[#fafafa]">Resume Builder</h1>
           </div>
         </header>
 
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="max-w-xl w-full text-center space-y-8">
             <div className="space-y-3">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-100 mb-2">
-                <Upload className="h-8 w-8 text-emerald-600" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#d4a017]/15 border border-[#d4a017]/30 mb-2">
+                <Upload className="h-8 w-8 text-[#d4a017]" />
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-bold text-[#fafafa] tracking-tight">
                 Upload Your Resume
               </h2>
-              <p className="text-lg text-slate-500 max-w-lg mx-auto">
+              <p className="text-lg text-[#a0a0a0] max-w-lg mx-auto">
                 Upload your existing resume PDF and we&apos;ll extract everything automatically. Then you can edit and tailor it for any job.
               </p>
             </div>
@@ -219,10 +219,10 @@ export default function Home() {
                 relative border-2 border-dashed rounded-xl p-10 text-center cursor-pointer
                 transition-all duration-200
                 ${dragActive
-                  ? 'border-emerald-400 bg-emerald-50 scale-[1.02]'
+                  ? 'border-[#d4a017] bg-[#d4a017]/10 scale-[1.02]'
                   : selectedFile
-                    ? 'border-emerald-300 bg-emerald-50'
-                    : 'border-slate-300 hover:border-emerald-400 hover:bg-slate-50'
+                    ? 'border-[#d4a017]/60 bg-[#d4a017]/5'
+                    : 'border-[#2a2a2a] hover:border-[#d4a017]/60 hover:bg-[#141414]'
                 }
               `}
             >
@@ -235,25 +235,25 @@ export default function Home() {
               />
               {selectedFile ? (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <FileText className="h-7 w-7 text-emerald-600" />
+                  <div className="w-14 h-14 rounded-full bg-[#d4a017]/15 flex items-center justify-center">
+                    <FileText className="h-7 w-7 text-[#d4a017]" />
                   </div>
-                  <p className="font-semibold text-slate-700">{selectedFile.name}</p>
-                  <p className="text-sm text-slate-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                  <p className="font-semibold text-[#fafafa]">{selectedFile.name}</p>
+                  <p className="text-sm text-[#a0a0a0]">{(selectedFile.size / 1024).toFixed(1)} KB</p>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={(e) => { e.stopPropagation(); setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                    className="text-xs text-slate-500 hover:text-slate-700"
+                    className="text-xs text-[#a0a0a0] hover:text-[#fafafa]"
                   >
                     Choose a different file
                   </Button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3">
-                  <Upload className={`h-10 w-10 ${dragActive ? 'text-emerald-500' : 'text-slate-400'}`} />
-                  <p className="font-medium text-slate-600">Drag & drop your resume PDF here</p>
-                  <p className="text-sm text-slate-400">or click to browse files</p>
+                  <Upload className={`h-10 w-10 ${dragActive ? 'text-[#d4a017]' : 'text-[#555]'}`} />
+                  <p className="font-medium text-[#ccc]">Drag & drop your resume PDF here</p>
+                  <p className="text-sm text-[#666]">or click to browse files</p>
                 </div>
               )}
             </div>
@@ -263,7 +263,7 @@ export default function Home() {
               onClick={handleUpload}
               disabled={!selectedFile || uploading}
               size="lg"
-              className="gap-2 min-w-[200px]"
+              className="gap-2 min-w-[200px] bg-[#d4a017] hover:bg-[#b8860b] text-[#0a0a0a] font-semibold"
             >
               {uploading ? (
                 <>
@@ -278,7 +278,7 @@ export default function Home() {
               )}
             </Button>
 
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#555]">
               Supports PDF resumes with selectable text
             </p>
           </div>
@@ -295,51 +295,51 @@ export default function Home() {
       className="w-full"
     >
       <AccordionItem value="personal-info">
-        <AccordionTrigger className="text-sm font-semibold hover:no-underline">Personal Information</AccordionTrigger>
+        <AccordionTrigger className="text-sm font-semibold hover:no-underline text-[#d4a017]">Personal Information</AccordionTrigger>
         <AccordionContent><PersonalInfoForm /></AccordionContent>
       </AccordionItem>
       <AccordionItem value="summary">
-        <AccordionTrigger className="text-sm font-semibold hover:no-underline">Professional Summary</AccordionTrigger>
+        <AccordionTrigger className="text-sm font-semibold hover:no-underline text-[#d4a017]">Professional Summary</AccordionTrigger>
         <AccordionContent><SummaryForm /></AccordionContent>
       </AccordionItem>
       <AccordionItem value="certifications">
-        <AccordionTrigger className="text-sm font-semibold hover:no-underline">Certifications</AccordionTrigger>
+        <AccordionTrigger className="text-sm font-semibold hover:no-underline text-[#d4a017]">Certifications</AccordionTrigger>
         <AccordionContent><CertificationsForm /></AccordionContent>
       </AccordionItem>
       <AccordionItem value="skills">
-        <AccordionTrigger className="text-sm font-semibold hover:no-underline">Technical Skills</AccordionTrigger>
+        <AccordionTrigger className="text-sm font-semibold hover:no-underline text-[#d4a017]">Technical Skills</AccordionTrigger>
         <AccordionContent><SkillsForm /></AccordionContent>
       </AccordionItem>
       <AccordionItem value="experience">
-        <AccordionTrigger className="text-sm font-semibold hover:no-underline">Professional Experience</AccordionTrigger>
+        <AccordionTrigger className="text-sm font-semibold hover:no-underline text-[#d4a017]">Professional Experience</AccordionTrigger>
         <AccordionContent><ExperienceForm /></AccordionContent>
       </AccordionItem>
       <AccordionItem value="education">
-        <AccordionTrigger className="text-sm font-semibold hover:no-underline">Education</AccordionTrigger>
+        <AccordionTrigger className="text-sm font-semibold hover:no-underline text-[#d4a017]">Education</AccordionTrigger>
         <AccordionContent><EducationForm /></AccordionContent>
       </AccordionItem>
       <AccordionItem value="projects">
-        <AccordionTrigger className="text-sm font-semibold hover:no-underline">Projects</AccordionTrigger>
+        <AccordionTrigger className="text-sm font-semibold hover:no-underline text-[#d4a017]">Projects</AccordionTrigger>
         <AccordionContent><ProjectsForm /></AccordionContent>
       </AccordionItem>
     </Accordion>
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
       {/* ─── Top Bar ──────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
+      <header className="sticky top-0 z-50 bg-[#111] border-b border-[#2a2a2a] shadow-lg shadow-black/30">
         <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <FileText className="h-5 w-5 text-slate-700" />
-            <h1 className="text-lg font-bold text-slate-800">Resume Builder</h1>
+            <FileText className="h-5 w-5 text-[#d4a017]" />
+            <h1 className="text-lg font-bold text-[#fafafa]">Resume Builder</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2 text-slate-600">
+            <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2 text-[#a0a0a0] hover:text-[#d4a017] hover:bg-[#1c1c1c]">
               <RotateCcw className="h-4 w-4" />
               <span className="hidden sm:inline">New Resume</span>
             </Button>
-            <Button size="sm" onClick={handleDownloadPDF} disabled={downloading} className="gap-2">
+            <Button size="sm" onClick={handleDownloadPDF} disabled={downloading} className="gap-2 bg-[#d4a017] hover:bg-[#b8860b] text-[#0a0a0a] font-semibold">
               {downloading ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden sm:inline">Generating...</span></>
               ) : (
@@ -351,12 +351,12 @@ export default function Home() {
       </header>
 
       {/* ─── AI Tailor Bar ────────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-700 border-b">
+      <div className="bg-gradient-to-r from-[#141414] to-[#1a1a0a] border-b border-[#d4a017]/20">
         <div className="max-w-[1600px] mx-auto px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="h-5 w-5 text-amber-400" />
-            <h2 className="text-white font-semibold text-sm">AI Resume Tailor</h2>
-            <span className="text-slate-400 text-xs">— Paste a job description and let AI optimize your resume</span>
+            <Sparkles className="h-5 w-5 text-[#d4a017]" />
+            <h2 className="text-[#d4a017] font-semibold text-sm">AI Resume Tailor</h2>
+            <span className="text-[#666] text-xs">— Paste a job description and let AI optimize your resume</span>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-3">
@@ -367,7 +367,7 @@ export default function Home() {
                 onChange={(e) => setJobDescription(e.target.value)}
                 placeholder="Paste the job description here..."
                 rows={3}
-                className="resize-y text-sm bg-white/95 border-slate-600 placeholder:text-slate-400"
+                className="resize-y text-sm bg-[#0a0a0a] border-[#2a2a2a] text-[#fafafa] placeholder:text-[#555] focus:border-[#d4a017]"
               />
             </div>
 
@@ -377,11 +377,11 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setShowInstructions(!showInstructions)}
-                className="flex items-center gap-2 text-amber-300 hover:text-amber-200 text-xs font-medium transition-colors"
+                className="flex items-center gap-2 text-[#d4a017] hover:text-[#fde047] text-xs font-medium transition-colors"
               >
                 {showInstructions ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                 Personalized Instructions
-                <span className="text-slate-400 font-normal">(optional)</span>
+                <span className="text-[#666] font-normal">(optional)</span>
               </button>
 
               {showInstructions && (
@@ -394,14 +394,14 @@ export default function Home() {
 • Highlight Python and SQL more
 • Change job title to Data Engineer`}
                   rows={3}
-                  className="resize-y text-xs bg-white/95 border-slate-600 placeholder:text-slate-400"
+                  className="resize-y text-xs bg-[#0a0a0a] border-[#2a2a2a] text-[#fafafa] placeholder:text-[#555] focus:border-[#d4a017]"
                 />
               )}
 
               <Button
                 onClick={handleTailor}
                 disabled={tailoring || !jobDescription.trim()}
-                className="gap-2 bg-amber-500 hover:bg-amber-600 text-white w-full"
+                className="gap-2 bg-[#d4a017] hover:bg-[#b8860b] text-[#0a0a0a] font-semibold w-full"
               >
                 {tailoring ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Tailoring...</>
@@ -413,10 +413,10 @@ export default function Home() {
           </div>
 
           {/* Info bar */}
-          <div className="mt-2 flex items-start gap-1.5 text-xs text-slate-400">
-            <Info className="h-3 w-3 shrink-0 mt-0.5" />
+          <div className="mt-2 flex items-start gap-1.5 text-xs text-[#555]">
+            <Info className="h-3 w-3 shrink-0 mt-0.5 text-[#d4a017]" />
             <span>
-              By default, AI will optimize your <strong className="text-slate-300">summary, skills, and all experience</strong> sections for the job.
+              By default, AI will optimize your <strong className="text-[#d4a017]">summary, skills, and all experience</strong> sections for the job.
               Use personalized instructions to guide exactly how the AI should update your resume.
             </span>
           </div>
@@ -428,13 +428,13 @@ export default function Home() {
         {/* Desktop Layout */}
         <div className="hidden lg:flex h-[calc(100vh-200px)]">
           {/* Left Panel - Form */}
-          <div className="w-[45%] border-r overflow-y-auto">
+          <div className="w-[45%] border-r border-[#2a2a2a] overflow-y-auto bg-[#0a0a0a]">
             <div className="p-4 max-w-2xl mx-auto">
               {formSections}
             </div>
           </div>
           {/* Right Panel - Preview */}
-          <div className="w-[55%] overflow-y-auto bg-slate-100">
+          <div className="w-[55%] overflow-y-auto bg-[#141414]">
             <div className="p-6 flex justify-center">
               <div className="w-full max-w-[800px]">
                 <ResumePreview />
@@ -446,22 +446,22 @@ export default function Home() {
         {/* Mobile Layout - Tabs */}
         <div className="lg:hidden">
           <Tabs defaultValue="form" className="w-full">
-            <TabsList className="w-full rounded-none border-b bg-white h-12">
-              <TabsTrigger value="form" className="flex-1 gap-2">
+            <TabsList className="w-full rounded-none border-b border-[#2a2a2a] bg-[#111] h-12">
+              <TabsTrigger value="form" className="flex-1 gap-2 text-[#a0a0a0] data-[state=active]:text-[#d4a017] data-[state=active]:bg-[#1c1c1c]">
                 <FileText className="h-4 w-4" /> Edit
               </TabsTrigger>
-              <TabsTrigger value="preview" className="flex-1 gap-2">
+              <TabsTrigger value="preview" className="flex-1 gap-2 text-[#a0a0a0] data-[state=active]:text-[#d4a017] data-[state=active]:bg-[#1c1c1c]">
                 <Eye className="h-4 w-4" /> Preview
               </TabsTrigger>
             </TabsList>
             <TabsContent value="form" className="mt-0">
               <ScrollArea className="h-[calc(100vh-280px)]">
-                <div className="p-4">{formSections}</div>
+                <div className="p-4 bg-[#0a0a0a]">{formSections}</div>
               </ScrollArea>
             </TabsContent>
             <TabsContent value="preview" className="mt-0">
               <ScrollArea className="h-[calc(100vh-280px)]">
-                <div className="p-4 bg-slate-100 min-h-[calc(100vh-280px)]">
+                <div className="p-4 bg-[#141414] min-h-[calc(100vh-280px)]">
                   <ResumePreview />
                 </div>
               </ScrollArea>
