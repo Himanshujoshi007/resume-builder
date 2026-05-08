@@ -92,8 +92,8 @@ export default function Home() {
     if (!selectedFile) return;
     setUploading(true);
     try {
-      // Simply send the PDF file to the server
-      // The server uses AI Vision to read the PDF directly - NO PDF library needed!
+      // Send the PDF file to the server
+      // Server uses unpdf (serverless-compatible) to extract text, then AI structures it
       const formData = new FormData();
       formData.append('resume', selectedFile);
 

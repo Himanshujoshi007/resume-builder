@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { extractText } from 'unpdf';
 import ZAI from 'z-ai-web-dev-sdk';
 import type { ResumeData } from '@/lib/resume-types';
 
@@ -22,27 +23,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert file to base64
+    // Extract text from PDF using unpdf (built for serverless/edge)
     const bytes = await file.arrayBuffer();
-    const base64 = Buffer.from(bytes).toString('base64');
-    const dataUrl = `data:application/pdf;base64,${base64}`;
+    const uint8Array = new Uint8Array(bytes);
 
-    // Use AI Vision API to read the PDF directly - NO PDF library needed!
-    // The AI can natively read PDF documents via the file_url content type.
+    let extractedText = '';
+
+    try {
+      const { text, totalPages } = await extractText(uint8Array);
+      // text is an array of page texts - join them
+      extractedText = Array.isArray(text) ? text.join('\n\n') : String(text);
+      console.log(`PDF parsed: ${totalPages} pages, ${extractedText.length} chars extracted`);
+    } catch (pdfError) {
+      console.error('PDF extraction error:', pdfError);
+      return NextResponse.json(
+        { error: 'Could not read the PDF file. Please ensure it is a valid PDF with selectable text.' },
+        { status: 400 }
+      );
+    }
+
+    if (!extractedText || extractedText.trim().length === 0) {
+      return NextResponse.json(
+        { error: 'Could not extract text from the PDF. Please ensure the PDF contains selectable text (not a scanned image).' },
+        { status: 400 }
+      );
+    }
+
+    // Use AI to structure the extracted text into ResumeData
     const zai = await ZAI.create();
 
-    const response = await zai.chat.completions.createVision({
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a resume parsing expert. Always respond with valid JSON only. No markdown, no explanation.'
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Read this PDF resume and convert it into a structured JSON format.
+    const prompt = `You are a resume parsing expert. Parse the following resume text and convert it into a structured JSON format.
+
+RESUME TEXT:
+${extractedText}
 
 Return the result as a valid JSON object with EXACTLY this structure:
 {
@@ -95,31 +108,21 @@ Rules:
 - Keep all information exactly as written in the resume - do not modify or fabricate
 - For skills, group them into logical categories based on how they appear in the resume
 - If skills are listed as a simple list without categories, create appropriate categories
-- IMPORTANT: certifications MUST be an array of plain strings, NOT objects
-- IMPORTANT: Return ONLY the JSON object, no markdown code fences, no explanation`
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: dataUrl
-              }
-            }
-          ]
-        }
+- IMPORTANT: certifications MUST be an array of plain strings, NOT objects. Example: ["AWS Certified Cloud Practitioner", "PL-300"]
+- IMPORTANT: Return ONLY the JSON object, no markdown code fences, no explanation`;
+
+    const completion = await zai.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a resume parsing expert. Always respond with valid JSON only. No markdown, no explanation.'
+        },
+        { role: 'user', content: prompt }
       ],
-      thinking: { type: 'disabled' }
+      temperature: 0.1,
     });
 
-    const responseText = response.choices[0]?.message?.content || '';
-
-    if (!responseText || responseText.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Could not read the PDF. Please ensure it is a valid resume with selectable text.' },
-        { status: 400 }
-      );
-    }
-
-    // Clean and parse the JSON response
+    const responseText = completion.choices[0]?.message?.content || '';
     const cleanedResponse = responseText
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
