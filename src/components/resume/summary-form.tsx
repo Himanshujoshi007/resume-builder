@@ -3,17 +3,13 @@
 import { useResumeStore } from '@/lib/resume-store';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function SummaryForm() {
   const { resumeData, setSummary } = useResumeStore();
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="summary">Professional Summary</Label>
-        <SectionTailorButton section="summary" sectionLabel="Professional Summary" />
-      </div>
+      <Label htmlFor="summary">Professional Summary</Label>
       <Textarea
         id="summary"
         value={resumeData.summary}

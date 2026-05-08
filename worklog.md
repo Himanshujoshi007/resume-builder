@@ -95,3 +95,36 @@ Stage Summary:
 - Additional instructions now apply across entire resume with clear examples
 - Both parse-resume and tailor-resume APIs enforce plain string certifications
 - Defensive coding added in store, preview, form, and PDF generation
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Recreate resume builder with simplified flow: Upload → Editor with AI Tailor bar at top
+
+Work Log:
+- Completely rewrote page.tsx with new 2-step flow:
+  Step 1: Upload resume screen (drag & drop PDF, parse, transition to editor)
+  Step 2: Editor with AI Tailor bar at the top (not a dialog)
+- Removed old welcome screen with 3 options (upload/blank/AI tailor)
+- Removed all section-specific tailor buttons from form components
+- Removed old dialog-based tailor flow (TailorDialog, SectionTailorButton, UploadResumeDialog)
+- Built AI Tailor bar directly into the editor layout as a dark gradient bar below the header
+  - Left side: Job Description textarea
+  - Right side: Personalized Instructions (collapsible) + Tailor button
+  - Info text: "By default, AI will optimize your summary, skills, and all experience sections"
+- Rewrote AI tailor API with new prompt:
+  - DEFAULT behavior (no instructions): tailors summary, skills, ALL experience, job title, certifications, projects
+  - PERSONALIZED instructions: overrides default behavior, user has full control
+  - Removed section-specific tailoring support (no longer needed)
+- Cleaned up all 7 form components to remove SectionTailorButton imports
+- Updated layout.tsx metadata for Resume Builder
+- Build verified successfully with no errors
+
+Stage Summary:
+- New flow: Upload Resume → Editor with AI Tailor bar at top
+- AI Tailor is always visible at the top (not hidden in dialogs)
+- Two clear inputs: Job Description + Personalized Instructions
+- Default AI behavior: summary + skills + experience
+- Personalized instructions override and guide AI behavior
+- Match score still shown after tailoring
+- All old unused components removed (tailor-dialog, section-tailor-button, upload-resume-dialog)

@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function SkillsForm() {
   const { resumeData, setSkills } = useResumeStore();
@@ -28,9 +27,6 @@ export function SkillsForm() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <SectionTailorButton section="skills" sectionLabel="Technical Skills" />
-      </div>
       {skills.map((skill, index) => (
         <div key={index} className="space-y-2 rounded-lg border p-3">
           <div className="flex items-center justify-between">
@@ -66,12 +62,7 @@ export function SkillsForm() {
           </div>
         </div>
       ))}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={addSkill}
-        className="w-full"
-      >
+      <Button variant="outline" size="sm" onClick={addSkill} className="w-full">
         <Plus className="h-4 w-4 mr-2" />
         Add Skill Category
       </Button>

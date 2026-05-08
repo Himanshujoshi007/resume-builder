@@ -4,7 +4,6 @@ import { useResumeStore } from '@/lib/resume-store';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
-import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function CertificationsForm() {
   const { resumeData, setCertifications } = useResumeStore();
@@ -31,9 +30,6 @@ export function CertificationsForm() {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <SectionTailorButton section="certifications" sectionLabel="Certifications" />
-      </div>
       {certifications.map((cert, index) => (
         <div key={index} className="flex gap-2 items-start">
           <Input
@@ -52,12 +48,7 @@ export function CertificationsForm() {
           </Button>
         </div>
       ))}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={addCertification}
-        className="w-full"
-      >
+      <Button variant="outline" size="sm" onClick={addCertification} className="w-full">
         <Plus className="h-4 w-4 mr-2" />
         Add Certification
       </Button>

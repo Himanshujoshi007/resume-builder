@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2 } from 'lucide-react';
-import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function ExperienceForm() {
   const { resumeData, setExperience } = useResumeStore();
@@ -58,9 +57,6 @@ export function ExperienceForm() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <SectionTailorButton section="experience" sectionLabel="Professional Experience" />
-      </div>
       {experience.map((exp, expIndex) => (
         <div key={expIndex} className="space-y-3 rounded-lg border p-3">
           <div className="flex items-center justify-between">
@@ -77,45 +73,25 @@ export function ExperienceForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Job Title</Label>
-              <Input
-                value={exp.jobTitle}
-                onChange={(e) => updateExperience(expIndex, 'jobTitle', e.target.value)}
-                placeholder="Software Engineer"
-              />
+              <Input value={exp.jobTitle} onChange={(e) => updateExperience(expIndex, 'jobTitle', e.target.value)} placeholder="Software Engineer" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Company</Label>
-              <Input
-                value={exp.company}
-                onChange={(e) => updateExperience(expIndex, 'company', e.target.value)}
-                placeholder="Company Name"
-              />
+              <Input value={exp.company} onChange={(e) => updateExperience(expIndex, 'company', e.target.value)} placeholder="Company Name" />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Start Date</Label>
-              <Input
-                value={exp.startDate}
-                onChange={(e) => updateExperience(expIndex, 'startDate', e.target.value)}
-                placeholder="MM/YYYY"
-              />
+              <Input value={exp.startDate} onChange={(e) => updateExperience(expIndex, 'startDate', e.target.value)} placeholder="MM/YYYY" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">End Date</Label>
-              <Input
-                value={exp.endDate}
-                onChange={(e) => updateExperience(expIndex, 'endDate', e.target.value)}
-                placeholder="MM/YYYY or Present"
-              />
+              <Input value={exp.endDate} onChange={(e) => updateExperience(expIndex, 'endDate', e.target.value)} placeholder="MM/YYYY or Present" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Location</Label>
-              <Input
-                value={exp.location}
-                onChange={(e) => updateExperience(expIndex, 'location', e.target.value)}
-                placeholder="City, State"
-              />
+              <Input value={exp.location} onChange={(e) => updateExperience(expIndex, 'location', e.target.value)} placeholder="City, State" />
             </div>
           </div>
           <div className="space-y-2">
@@ -139,24 +115,14 @@ export function ExperienceForm() {
                 </Button>
               </div>
             ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => addBullet(expIndex)}
-              className="w-full"
-            >
+            <Button variant="outline" size="sm" onClick={() => addBullet(expIndex)} className="w-full">
               <Plus className="h-3.5 w-3.5 mr-1" />
               Add Bullet Point
             </Button>
           </div>
         </div>
       ))}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={addExperience}
-        className="w-full"
-      >
+      <Button variant="outline" size="sm" onClick={addExperience} className="w-full">
         <Plus className="h-4 w-4 mr-2" />
         Add Experience
       </Button>

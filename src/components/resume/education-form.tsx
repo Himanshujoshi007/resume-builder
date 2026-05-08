@@ -6,17 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2 } from 'lucide-react';
-import { SectionTailorButton } from '@/components/resume/section-tailor-button';
 
 export function EducationForm() {
   const { resumeData, setEducation } = useResumeStore();
   const { education } = resumeData;
 
   const addEducation = () => {
-    setEducation([
-      ...education,
-      { degree: '', startDate: '', endDate: '', school: '', location: '' },
-    ]);
+    setEducation([...education, { degree: '', startDate: '', endDate: '', school: '', location: '' }]);
   };
 
   const removeEducation = (index: number) => {
@@ -31,9 +27,6 @@ export function EducationForm() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <SectionTailorButton section="education" sectionLabel="Education" />
-      </div>
       {education.map((edu, index) => (
         <div key={index} className="space-y-3 rounded-lg border p-3">
           <div className="flex items-center justify-between">
@@ -49,56 +42,31 @@ export function EducationForm() {
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Degree</Label>
-            <Input
-              value={edu.degree}
-              onChange={(e) => updateEducation(index, 'degree', e.target.value)}
-              placeholder="Bachelor of Science in Computer Science"
-            />
+            <Input value={edu.degree} onChange={(e) => updateEducation(index, 'degree', e.target.value)} placeholder="Bachelor of Science in Computer Science" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Start Date</Label>
-              <Input
-                value={edu.startDate}
-                onChange={(e) => updateEducation(index, 'startDate', e.target.value)}
-                placeholder="MM/YYYY"
-              />
+              <Input value={edu.startDate} onChange={(e) => updateEducation(index, 'startDate', e.target.value)} placeholder="MM/YYYY" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">End Date</Label>
-              <Input
-                value={edu.endDate}
-                onChange={(e) => updateEducation(index, 'endDate', e.target.value)}
-                placeholder="MM/YYYY"
-              />
+              <Input value={edu.endDate} onChange={(e) => updateEducation(index, 'endDate', e.target.value)} placeholder="MM/YYYY" />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">School</Label>
-              <Input
-                value={edu.school}
-                onChange={(e) => updateEducation(index, 'school', e.target.value)}
-                placeholder="University Name"
-              />
+              <Input value={edu.school} onChange={(e) => updateEducation(index, 'school', e.target.value)} placeholder="University Name" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Location</Label>
-              <Input
-                value={edu.location}
-                onChange={(e) => updateEducation(index, 'location', e.target.value)}
-                placeholder="City, State"
-              />
+              <Input value={edu.location} onChange={(e) => updateEducation(index, 'location', e.target.value)} placeholder="City, State" />
             </div>
           </div>
         </div>
       ))}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={addEducation}
-        className="w-full"
-      >
+      <Button variant="outline" size="sm" onClick={addEducation} className="w-full">
         <Plus className="h-4 w-4 mr-2" />
         Add Education
       </Button>
